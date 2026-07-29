@@ -33,6 +33,7 @@
       flex-direction: column;
       height: 100vh;
       overflow: hidden;
+      position: relative;
     }
 
     header {
@@ -286,6 +287,68 @@
       background: var(--primary);
       border: 1px solid #fff;
     }
+
+    /* --- INSTALL APP POPUP MODAL --- */
+    .install-modal-overlay {
+      display: none;
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100vw;
+      height: 100vh;
+      background: rgba(0, 0, 0, 0.75);
+      z-index: 9999;
+      justify-content: center;
+      align-items: center;
+      padding: 1rem;
+      backdrop-filter: blur(4px);
+    }
+
+    .install-modal-box {
+      background: var(--surface);
+      border: 1px solid #444;
+      border-radius: 16px;
+      padding: 1.5rem;
+      max-width: 420px;
+      width: 100%;
+      text-align: center;
+      box-shadow: 0 10px 25px rgba(0, 0, 0, 0.5);
+      animation: modalSlideUp 0.3s ease-out;
+    }
+
+    @keyframes modalSlideUp {
+      from { transform: translateY(30px); opacity: 0; }
+      to { transform: translateY(0); opacity: 1; }
+    }
+
+    .install-icon {
+      font-size: 3rem;
+      margin-bottom: 0.5rem;
+    }
+
+    .install-modal-title {
+      font-size: 1.25rem;
+      font-weight: bold;
+      margin-bottom: 0.5rem;
+      color: var(--text);
+    }
+
+    .install-modal-desc {
+      font-size: 0.9rem;
+      color: var(--text-dim);
+      margin-bottom: 1.25rem;
+      line-height: 1.4;
+    }
+
+    .install-modal-actions {
+      display: flex;
+      gap: 0.75rem;
+      justify-content: center;
+    }
+
+    .install-modal-actions button {
+      flex: 1;
+    }
   </style>
 </head>
 <body>
@@ -360,6 +423,21 @@
     </div>
   </div>
 
+  <!-- INSTALL DESKTOP/MOBILE POPUP MODAL -->
+  <div id="install-modal" class="install-modal-overlay">
+    <div class="install-modal-box">
+      <div class="install-icon">💻📱</div>
+      <div class="install-modal-title">Install SHM Scanner</div>
+      <div class="install-modal-desc">
+        Install SHM Scanner on your Desktop or Device for fast, offline-ready document scanning and easy access anytime!
+      </div>
+      <div class="install-modal-actions">
+        <button class="secondary" onclick="closeInstallModal()">Not Now</button>
+        <button onclick="triggerAppInstall()">🚀 Install App</button>
+      </div>
+    </div>
+  </div>
+
   <script src="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.5.13/cropper.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 
@@ -372,9 +450,46 @@
     let cropper = null;
     let currentFilter = 'original';
     let selectedSizeMode = 'compressed'; // 'compressed' or 'original'
+    let deferredPrompt = null; // Store browser install event
 
     const editorImg = document.getElementById('editor-image');
     const pagesGrid = document.getElementById('pages-grid');
+    const installModal = document.getElementById('install-modal');
+
+    // Handle PWA BeforeInstallPrompt Event
+    window.addEventListener('beforeinstallprompt', (e) => {
+      // Prevent automatic browser banner
+      e.preventDefault();
+      deferredPrompt = e;
+
+      // Check if user previously closed modal in this session
+      if (!sessionStorage.getItem('installPromptDismissed')) {
+        setTimeout(() => {
+          installModal.style.display = 'flex';
+        }, 1500); // Display popup after 1.5 seconds
+      }
+    });
+
+    function closeInstallModal() {
+      installModal.style.display = 'none';
+      sessionStorage.setItem('installPromptDismissed', 'true');
+    }
+
+    async function triggerAppInstall() {
+      installModal.style.display = 'none';
+      if (deferredPrompt) {
+        deferredPrompt.prompt();
+        const { outcome } = await deferredPrompt.userChoice;
+        if (outcome === 'accepted') {
+          console.log('User accepted the install prompt');
+        } else {
+          console.log('User dismissed the install prompt');
+        }
+        deferredPrompt = null;
+      } else {
+        alert('To install this app on Desktop: Click your browser menu (⋮ or ⊕) and select "Install SHM Scanner" or "Create Shortcut".');
+      }
+    }
 
     function goToStep(step) {
       document.querySelectorAll('.step').forEach(s => s.classList.remove('active'));
