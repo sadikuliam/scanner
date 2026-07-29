@@ -7,8 +7,11 @@
     <link rel="manifest" href="manifest.json" />
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.5.13/cropper.min.css" />
     <style>
-        /* ─── Reset & Base ─────────────────────────────────────── */
-        * { box-sizing: border-box; margin: 0; padding: 0; }
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
         body {
             font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
             background: #f5f7fa;
@@ -26,126 +29,489 @@
             align-items: center;
             border-bottom: 1px solid #e2e8f0;
             flex-shrink: 0;
-            box-shadow: 0 1px 4px rgba(0,0,0,0.04);
+            box-shadow: 0 1px 4px rgba(0, 0, 0, 0.04);
         }
-        .header-title { font-size: 1.2rem; font-weight: 700; color: #0f172a; display: flex; align-items: center; gap: 0.5rem; }
-        .header-title span { background: #2563eb; color: white; font-size: 0.7rem; padding: 0.1rem 0.5rem; border-radius: 12px; margin-left: 0.3rem; }
-        .header-install-btn { background: #2563eb; color: white; border: none; padding: 0.35rem 0.9rem; border-radius: 20px; font-weight: 600; font-size: 0.8rem; cursor: pointer; transition: 0.2s; }
-        .header-install-btn:active { transform: scale(0.95); }
-        .step { display: none; flex: 1; flex-direction: column; padding: 1rem 1.2rem 1.2rem; overflow-y: auto; background: #f8fafc; }
-        .step.active { display: flex; }
-        .capture-container { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 1.5rem; text-align: center; }
-        .capture-container .icon-big { font-size: 4rem; color: #2563eb; }
-        .capture-container h2 { font-weight: 700; font-size: 1.5rem; color: #0f172a; }
-        .capture-container p { color: #475569; max-width: 320px; font-size: 0.95rem; }
-        .btn-group { display: flex; gap: 0.8rem; flex-wrap: wrap; justify-content: center; margin-top: 0.5rem; }
+        .header-title {
+            font-size: 1.2rem;
+            font-weight: 700;
+            color: #0f172a;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+        .header-title span {
+            background: #2563eb;
+            color: white;
+            font-size: 0.7rem;
+            padding: 0.1rem 0.5rem;
+            border-radius: 12px;
+            margin-left: 0.3rem;
+        }
+        .header-install-btn {
+            background: #2563eb;
+            color: white;
+            border: none;
+            padding: 0.35rem 0.9rem;
+            border-radius: 20px;
+            font-weight: 600;
+            font-size: 0.8rem;
+            cursor: pointer;
+            transition: 0.2s;
+        }
+        .header-install-btn:active {
+            transform: scale(0.95);
+        }
+        .step {
+            display: none;
+            flex: 1;
+            flex-direction: column;
+            padding: 1rem 1.2rem 1.2rem;
+            overflow-y: auto;
+            background: #f8fafc;
+        }
+        .step.active {
+            display: flex;
+        }
+        .capture-container {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            gap: 1.5rem;
+            text-align: center;
+        }
+        .capture-container .icon-big {
+            font-size: 4rem;
+            color: #2563eb;
+        }
+        .capture-container h2 {
+            font-weight: 700;
+            font-size: 1.5rem;
+            color: #0f172a;
+        }
+        .capture-container p {
+            color: #475569;
+            max-width: 320px;
+            font-size: 0.95rem;
+        }
+        .btn-group {
+            display: flex;
+            gap: 0.8rem;
+            flex-wrap: wrap;
+            justify-content: center;
+            margin-top: 0.5rem;
+        }
         .btn {
-            background: #2563eb; color: white; border: none; padding: 0.8rem 1.6rem; border-radius: 40px;
-            font-weight: 600; font-size: 0.95rem; cursor: pointer; display: inline-flex; align-items: center;
-            gap: 0.5rem; transition: 0.2s; min-height: 48px; box-shadow: 0 4px 10px rgba(37,99,235,0.2);
+            background: #2563eb;
+            color: white;
+            border: none;
+            padding: 0.8rem 1.6rem;
+            border-radius: 40px;
+            font-weight: 600;
+            font-size: 0.95rem;
+            cursor: pointer;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            transition: 0.2s;
+            min-height: 48px;
+            box-shadow: 0 4px 10px rgba(37, 99, 235, 0.2);
         }
-        .btn:active { transform: scale(0.96); opacity: 0.8; }
-        .btn-outline { background: transparent; color: #1e293b; border: 2px solid #cbd5e1; box-shadow: none; }
-        .btn-outline:active { background: #f1f5f9; }
-        .btn-sm { padding: 0.5rem 1rem; font-size: 0.85rem; min-height: 38px; }
-        .btn-secondary { background: #e2e8f0; color: #1e293b; box-shadow: none; }
-        .btn-success { background: #16a34a; box-shadow: 0 4px 10px rgba(22,163,74,0.25); }
-        .btn-share { background: #0ea5e9; box-shadow: 0 4px 10px rgba(14,165,233,0.25); }
-        .page-count-badge { background: #e2e8f0; padding: 0.3rem 1rem; border-radius: 20px; font-size: 0.85rem; color: #1e293b; }
+        .btn:active {
+            transform: scale(0.96);
+            opacity: 0.8;
+        }
+        .btn-outline {
+            background: transparent;
+            color: #1e293b;
+            border: 2px solid #cbd5e1;
+            box-shadow: none;
+        }
+        .btn-outline:active {
+            background: #f1f5f9;
+        }
+        .btn-sm {
+            padding: 0.5rem 1rem;
+            font-size: 0.85rem;
+            min-height: 38px;
+        }
+        .btn-secondary {
+            background: #e2e8f0;
+            color: #1e293b;
+            box-shadow: none;
+        }
+        .btn-success {
+            background: #16a34a;
+            box-shadow: 0 4px 10px rgba(22, 163, 74, 0.25);
+        }
+        .btn-share {
+            background: #0ea5e9;
+            box-shadow: 0 4px 10px rgba(14, 165, 233, 0.25);
+        }
+        .page-count-badge {
+            background: #e2e8f0;
+            padding: 0.3rem 1rem;
+            border-radius: 20px;
+            font-size: 0.85rem;
+            color: #1e293b;
+        }
         .editor-container {
-            flex: 1; min-height: 200px; max-height: 58vh; background: #e2e8f0; border-radius: 16px;
-            overflow: hidden; position: relative; margin-bottom: 0.8rem; display: flex; align-items: center; justify-content: center;
+            flex: 1;
+            min-height: 200px;
+            max-height: 58vh;
+            background: #e2e8f0;
+            border-radius: 16px;
+            overflow: hidden;
+            position: relative;
+            margin-bottom: 0.8rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
         }
-        .editor-container img { max-width: 100%; max-height: 100%; display: block; }
-        .editor-container .loading-placeholder { color: #475569; font-size: 1rem; display: flex; align-items: center; gap: 0.5rem; position: absolute; z-index: 10; }
-        .filter-bar { display: flex; gap: 0.4rem; justify-content: center; flex-wrap: wrap; margin: 0.4rem 0 0.6rem; }
+        .editor-container img {
+            max-width: 100%;
+            max-height: 100%;
+            display: block;
+        }
+        .editor-container .loading-placeholder {
+            color: #475569;
+            font-size: 1rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            position: absolute;
+            z-index: 10;
+        }
+        .filter-bar {
+            display: flex;
+            gap: 0.4rem;
+            justify-content: center;
+            flex-wrap: wrap;
+            margin: 0.4rem 0 0.6rem;
+        }
         .filter-bar button {
-            background: #e2e8f0; color: #1e293b; border: none; padding: 0.3rem 0.9rem; border-radius: 30px;
-            font-size: 0.78rem; font-weight: 600; cursor: pointer; transition: 0.2s; min-height: 32px;
+            background: #e2e8f0;
+            color: #1e293b;
+            border: none;
+            padding: 0.3rem 0.9rem;
+            border-radius: 30px;
+            font-size: 0.78rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: 0.2s;
+            min-height: 32px;
         }
-        .filter-bar button.active-filter { background: #2563eb; color: white; }
-        .filter-bar button:active { transform: scale(0.95); }
-        .editor-actions { display: flex; gap: 0.6rem; flex-wrap: wrap; justify-content: center; }
+        .filter-bar button.active-filter {
+            background: #2563eb;
+            color: white;
+        }
+        .filter-bar button:active {
+            transform: scale(0.95);
+        }
+        .editor-actions {
+            display: flex;
+            gap: 0.6rem;
+            flex-wrap: wrap;
+            justify-content: center;
+        }
         .size-mode-container {
-            background: white; border-radius: 16px; padding: 0.8rem 1rem; margin-bottom: 0.8rem;
-            box-shadow: 0 1px 4px rgba(0,0,0,0.04); border: 1px solid #e2e8f0;
+            background: white;
+            border-radius: 16px;
+            padding: 0.8rem 1rem;
+            margin-bottom: 0.8rem;
+            box-shadow: 0 1px 4px rgba(0, 0, 0, 0.04);
+            border: 1px solid #e2e8f0;
         }
-        .size-mode-title { font-weight: 600; font-size: 0.85rem; color: #475569; display: flex; justify-content: space-between; align-items: center; }
-        .size-badge { background: #2563eb; color: white; padding: 0.1rem 0.6rem; border-radius: 12px; font-size: 0.7rem; }
-        .mode-toggle { display: flex; gap: 0.4rem; margin-top: 0.4rem; }
+        .size-mode-title {
+            font-weight: 600;
+            font-size: 0.85rem;
+            color: #475569;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .size-badge {
+            background: #2563eb;
+            color: white;
+            padding: 0.1rem 0.6rem;
+            border-radius: 12px;
+            font-size: 0.7rem;
+        }
+        .mode-toggle {
+            display: flex;
+            gap: 0.4rem;
+            margin-top: 0.4rem;
+        }
         .mode-toggle button {
-            flex: 1; background: #f1f5f9; border: 2px solid transparent; padding: 0.4rem 0.2rem;
-            border-radius: 10px; font-weight: 600; font-size: 0.8rem; cursor: pointer; transition: 0.2s; color: #475569;
+            flex: 1;
+            background: #f1f5f9;
+            border: 2px solid transparent;
+            padding: 0.4rem 0.2rem;
+            border-radius: 10px;
+            font-weight: 600;
+            font-size: 0.8rem;
+            cursor: pointer;
+            transition: 0.2s;
+            color: #475569;
         }
-        .mode-toggle button.active-mode { background: #2563eb; color: white; border-color: #1e293b; }
-        .size-mode-sub { font-size: 0.7rem; color: #64748b; margin-top: 0.3rem; display: block; }
+        .mode-toggle button.active-mode {
+            background: #2563eb;
+            color: white;
+            border-color: #1e293b;
+        }
+        .size-mode-sub {
+            font-size: 0.7rem;
+            color: #64748b;
+            margin-top: 0.3rem;
+            display: block;
+        }
         .size-warning {
-            background: #fef9c3; border: 1px solid #facc15; border-radius: 10px; padding: 0.4rem 0.8rem;
-            font-size: 0.75rem; color: #854d0e; margin-bottom: 0.6rem; display: flex; align-items: center; gap: 0.4rem;
+            background: #fef9c3;
+            border: 1px solid #facc15;
+            border-radius: 10px;
+            padding: 0.4rem 0.8rem;
+            font-size: 0.75rem;
+            color: #854d0e;
+            margin-bottom: 0.6rem;
+            display: flex;
+            align-items: center;
+            gap: 0.4rem;
         }
-        .size-warning.success { background: #dcfce7; border-color: #22c55e; color: #166534; }
-        .size-warning.info { background: #dbeafe; border-color: #2563eb; color: #1e40af; }
+        .size-warning.success {
+            background: #dcfce7;
+            border-color: #22c55e;
+            color: #166534;
+        }
+        .size-warning.info {
+            background: #dbeafe;
+            border-color: #2563eb;
+            color: #1e40af;
+        }
         .grid {
-            display: grid; grid-template-columns: repeat(auto-fill, minmax(110px, 1fr)); gap: 0.8rem;
-            width: 100%; padding-bottom: 0.5rem;
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(110px, 1fr));
+            gap: 0.8rem;
+            width: 100%;
+            padding-bottom: 0.5rem;
         }
-        .page-card { background: white; border-radius: 12px; overflow: hidden; border: 1px solid #e2e8f0; box-shadow: 0 2px 6px rgba(0,0,0,0.02); }
-        .page-card-image-wrap { position: relative; aspect-ratio: 1 / 1.414; background: #f1f5f9; }
-        .page-card-image-wrap img { width: 100%; height: 100%; object-fit: contain; }
+        .page-card {
+            background: white;
+            border-radius: 12px;
+            overflow: hidden;
+            border: 1px solid #e2e8f0;
+            box-shadow: 0 2px 6px rgba(0, 0, 0, 0.02);
+        }
+        .page-card-image-wrap {
+            position: relative;
+            aspect-ratio: 1/1.414;
+            background: #f1f5f9;
+        }
+        .page-card-image-wrap img {
+            width: 100%;
+            height: 100%;
+            object-fit: contain;
+        }
         .page-card .delete-btn {
-            position: absolute; top: 4px; right: 4px; background: rgba(239,68,68,0.9); color: white;
-            border: none; border-radius: 50%; width: 24px; height: 24px; font-weight: bold; font-size: 0.8rem;
-            cursor: pointer; display: flex; align-items: center; justify-content: center;
+            position: absolute;
+            top: 4px;
+            right: 4px;
+            background: rgba(239, 68, 68, 0.9);
+            color: white;
+            border: none;
+            border-radius: 50%;
+            width: 24px;
+            height: 24px;
+            font-weight: bold;
+            font-size: 0.8rem;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
         }
-        .page-badge { position: absolute; bottom: 4px; left: 4px; background: rgba(0,0,0,0.7); color: white; font-size: 0.55rem; padding: 1px 6px; border-radius: 4px; }
-        .page-size-badge { position: absolute; bottom: 4px; right: 4px; font-size: 0.55rem; padding: 1px 6px; border-radius: 4px; font-weight: 700; }
-        .page-size-badge.ok { background: #22c55e; color: white; }
-        .page-size-badge.over { background: #ef4444; color: white; }
-        .page-size-badge.hd { background: #2563eb; color: white; }
-        .rotate-card-btn { background: #f1f5f9; border: none; border-top: 1px solid #e2e8f0; padding: 0.3rem 0.4rem; font-size: 0.7rem; width: 100%; cursor: pointer; color: #475569; font-weight: 500; }
-        .rotate-card-btn:active { background: #e2e8f0; }
+        .page-badge {
+            position: absolute;
+            bottom: 4px;
+            left: 4px;
+            background: rgba(0, 0, 0, 0.7);
+            color: white;
+            font-size: 0.55rem;
+            padding: 1px 6px;
+            border-radius: 4px;
+        }
+        .page-size-badge {
+            position: absolute;
+            bottom: 4px;
+            right: 4px;
+            font-size: 0.55rem;
+            padding: 1px 6px;
+            border-radius: 4px;
+            font-weight: 700;
+        }
+        .page-size-badge.ok {
+            background: #22c55e;
+            color: white;
+        }
+        .page-size-badge.over {
+            background: #ef4444;
+            color: white;
+        }
+        .page-size-badge.hd {
+            background: #2563eb;
+            color: white;
+        }
+        .rotate-card-btn {
+            background: #f1f5f9;
+            border: none;
+            border-top: 1px solid #e2e8f0;
+            padding: 0.3rem 0.4rem;
+            font-size: 0.7rem;
+            width: 100%;
+            cursor: pointer;
+            color: #475569;
+            font-weight: 500;
+        }
+        .rotate-card-btn:active {
+            background: #e2e8f0;
+        }
         #status-toast {
-            display: none; position: fixed; bottom: 24px; left: 50%; transform: translateX(-50%);
-            background: #1e293b; color: white; padding: 10px 20px; border-radius: 40px; font-size: 0.9rem;
-            z-index: 9999; box-shadow: 0 8px 20px rgba(0,0,0,0.2); max-width: 90%; text-align: center; pointer-events: none;
+            display: none;
+            position: fixed;
+            bottom: 24px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: #1e293b;
+            color: white;
+            padding: 10px 20px;
+            border-radius: 40px;
+            font-size: 0.9rem;
+            z-index: 9999;
+            box-shadow: 0 8px 20px rgba(0, 0, 0, 0.2);
+            max-width: 90%;
+            text-align: center;
+            pointer-events: none;
         }
         .install-modal-overlay {
-            display: none; position: fixed; top: 0; left: 0; width: 100vw; height: 100vh;
-            background: rgba(0,0,0,0.6); backdrop-filter: blur(4px); z-index: 9999;
-            justify-content: center; align-items: center; padding: 1rem;
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
+            background: rgba(0, 0, 0, 0.6);
+            backdrop-filter: blur(4px);
+            z-index: 9999;
+            justify-content: center;
+            align-items: center;
+            padding: 1rem;
         }
         .install-modal-box {
-            background: white; border-radius: 24px; padding: 1.8rem; max-width: 400px; width: 100%;
-            text-align: center; animation: modalSlideUp 0.3s ease-out;
+            background: white;
+            border-radius: 24px;
+            padding: 1.8rem;
+            max-width: 400px;
+            width: 100%;
+            text-align: center;
+            animation: modalSlideUp 0.3s ease-out;
         }
-        @keyframes modalSlideUp { from { transform: translateY(30px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
-        .install-modal-box .icon { font-size: 3rem; }
-        .install-modal-box h3 { margin: 0.5rem 0 0.3rem; font-size: 1.3rem; }
-        .install-modal-box p { color: #64748b; font-size: 0.9rem; margin-bottom: 1.2rem; }
-        .install-modal-actions { display: flex; gap: 0.6rem; justify-content: center; }
-        .install-modal-actions button { flex: 1; padding: 0.6rem; border-radius: 40px; border: none; font-weight: 600; cursor: pointer; }
-        .install-modal-actions .btn-close { background: #e2e8f0; color: #1e293b; }
-        .install-modal-actions .btn-install { background: #2563eb; color: white; }
-        /* Cropper overrides */
-        .cropper-bg { background-image: none !important; background-color: #e2e8f0 !important; }
-        .cropper-view-box { outline: 3px solid #2563eb !important; }
-        .cropper-line { background-color: #2563eb !important; }
-        .cropper-point { background-color: #2563eb !important; width: 22px !important; height: 22px !important; opacity: 1 !important; border-radius: 50% !important; border: 2px solid white !important; box-shadow: 0 0 8px rgba(0,0,0,0.3); }
+        @keyframes modalSlideUp {
+            from {
+                transform: translateY(30px);
+                opacity: 0;
+            }
+            to {
+                transform: translateY(0);
+                opacity: 1;
+            }
+        }
+        .install-modal-box .icon {
+            font-size: 3rem;
+        }
+        .install-modal-box h3 {
+            margin: 0.5rem 0 0.3rem;
+            font-size: 1.3rem;
+        }
+        .install-modal-box p {
+            color: #64748b;
+            font-size: 0.9rem;
+            margin-bottom: 1.2rem;
+        }
+        .install-modal-actions {
+            display: flex;
+            gap: 0.6rem;
+            justify-content: center;
+        }
+        .install-modal-actions button {
+            flex: 1;
+            padding: 0.6rem;
+            border-radius: 40px;
+            border: none;
+            font-weight: 600;
+            cursor: pointer;
+        }
+        .install-modal-actions .btn-close {
+            background: #e2e8f0;
+            color: #1e293b;
+        }
+        .install-modal-actions .btn-install {
+            background: #2563eb;
+            color: white;
+        }
+        .cropper-bg {
+            background-image: none !important;
+            background-color: #e2e8f0 !important;
+        }
+        .cropper-view-box {
+            outline: 3px solid #2563eb !important;
+        }
+        .cropper-line {
+            background-color: #2563eb !important;
+        }
+        .cropper-point {
+            background-color: #2563eb !important;
+            width: 22px !important;
+            height: 22px !important;
+            opacity: 1 !important;
+            border-radius: 50% !important;
+            border: 2px solid white !important;
+            box-shadow: 0 0 8px rgba(0, 0, 0, 0.3);
+        }
         @media (max-width: 480px) {
-            .grid { grid-template-columns: repeat(auto-fill, minmax(90px, 1fr)); }
-            .btn { padding: 0.6rem 1.2rem; font-size: 0.85rem; min-height: 42px; }
-            .header-title { font-size: 1rem; }
-            .capture-container h2 { font-size: 1.2rem; }
-            .editor-container { max-height: 45vh; min-height: 160px; }
+            .grid {
+                grid-template-columns: repeat(auto-fill, minmax(90px, 1fr));
+            }
+            .btn {
+                padding: 0.6rem 1.2rem;
+                font-size: 0.85rem;
+                min-height: 42px;
+            }
+            .header-title {
+                font-size: 1rem;
+            }
+            .capture-container h2 {
+                font-size: 1.2rem;
+            }
+            .editor-container {
+                max-height: 45vh;
+                min-height: 160px;
+            }
         }
-        @media (max-height: 700px) { .editor-container { max-height: 40vh; min-height: 140px; } }
-        .cropper-container img { opacity: 1 !important; display: block !important; }
+        @media (max-height: 700px) {
+            .editor-container {
+                max-height: 40vh;
+                min-height: 140px;
+            }
+        }
+        .cropper-container img {
+            opacity: 1 !important;
+            display: block !important;
+        }
     </style>
 </head>
 <body>
 
     <header>
-        <div class="header-title">📄 SHM Scanner <span>β</span></div>
+        <div class="header-title">📄 SHM Scanner (© shmwb.in) <span></span></div>
         <button class="header-install-btn" onclick="openInstallPrompt()">📲 Install</button>
     </header>
 
@@ -229,8 +595,10 @@
     <!-- TOAST -->
     <div id="status-toast"></div>
 
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.5.13/cropper.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.5.13/cropper.min.js">
+    </script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js">
+    </script>
 
     <script>
         // ─── CONSTANTS ─────────────────────────────────────────────
@@ -238,7 +606,6 @@
         const TARGET_BYTES = 99 * 1024;
         const SHARE_TARGET_BYTES = 90 * 1024; // 90 KB for sharing
 
-        // Compression parameters for different targets
         const COMPRESS_99KB = { maxDimStart: 1100, qualityFloor: 0.08, dimStep: 80, minDim: 300 };
         const COMPRESS_SHARE = { maxDimStart: 800, qualityFloor: 0.06, dimStep: 70, minDim: 250 };
 
@@ -271,10 +638,12 @@
         });
 
         function openInstallPrompt() { installModal.style.display = 'flex'; }
+
         function closeInstallModal() {
             installModal.style.display = 'none';
             sessionStorage.setItem('installPromptDismissed', 'true');
         }
+
         async function triggerAppInstall() {
             if (deferredPrompt) {
                 deferredPrompt.prompt();
@@ -290,6 +659,7 @@
 
         // ─── Toast ─────────────────────────────────────────────────
         let toastTimer = null;
+
         function showToast(msg, duration = 3500) {
             toastEl.innerText = msg;
             toastEl.style.display = 'block';
@@ -304,6 +674,7 @@
             if (step === 3) renderPages();
             updatePageCount();
         }
+
         function updatePageCount() { pageCountDisplay.textContent = scannedPagesOriginal.length; }
 
         // ─── Size Mode ─────────────────────────────────────────────
@@ -335,7 +706,9 @@
 
             loadingPlaceholder.style.display = 'flex';
             editorImg.style.display = 'none';
-            if (cropper) { cropper.destroy(); cropper = null; isCropperReady = false; }
+            if (cropper) { cropper.destroy();
+                cropper = null;
+                isCropperReady = false; }
 
             const reader = new FileReader();
             reader.onload = (evt) => {
@@ -343,36 +716,49 @@
                 img.onload = () => {
                     const canvas = document.createElement('canvas');
                     const ctx = canvas.getContext('2d');
-                    let w = img.width, h = img.height;
+                    let w = img.width,
+                        h = img.height;
                     const MAX_EDITOR = 2800;
-                    if (w > MAX_EDITOR) { h = Math.round((h * MAX_EDITOR) / w); w = MAX_EDITOR; }
-                    canvas.width = w; canvas.height = h;
-                    ctx.imageSmoothingEnabled = true; ctx.imageSmoothingQuality = 'high';
+                    if (w > MAX_EDITOR) { h = Math.round((h * MAX_EDITOR) / w);
+                        w = MAX_EDITOR; }
+                    canvas.width = w;
+                    canvas.height = h;
+                    ctx.imageSmoothingEnabled = true;
+                    ctx.imageSmoothingQuality = 'high';
                     ctx.drawImage(img, 0, 0, w, h);
                     const rect = autoDetectDocument(canvas);
                     const dataUrl = canvas.toDataURL('image/jpeg', 0.95);
                     preloadAndInitCropper(dataUrl, rect);
                     isProcessing = false;
                 };
-                img.onerror = () => { isProcessing = false; showToast('❌ Failed to decode image.', 3000); loadingPlaceholder.style.display = 'none'; };
+                img.onerror = () => { isProcessing = false;
+                    showToast('❌ Failed to decode image.', 3000);
+                    loadingPlaceholder.style.display = 'none'; };
                 img.src = evt.target.result;
             };
-            reader.onerror = () => { isProcessing = false; showToast('❌ File read error.', 3000); loadingPlaceholder.style.display = 'none'; };
+            reader.onerror = () => { isProcessing = false;
+                showToast('❌ File read error.', 3000);
+                loadingPlaceholder.style.display = 'none'; };
             reader.readAsDataURL(file);
         }
 
         // ─── Auto‑Detect ──────────────────────────────────────────
         function autoDetectDocument(canvas) {
             const ctx = canvas.getContext('2d');
-            const w = canvas.width, h = canvas.height;
+            const w = canvas.width,
+                h = canvas.height;
             const imageData = ctx.getImageData(0, 0, w, h);
             const data = imageData.data;
             const threshold = 200;
-            let minX = w, maxX = 0, minY = h, maxY = 0, found = false;
+            let minX = w,
+                maxX = 0,
+                minY = h,
+                maxY = 0,
+                found = false;
             for (let y = 0; y < h; y++) {
                 for (let x = 0; x < w; x++) {
                     const idx = (y * w + x) * 4;
-                    const gray = 0.299 * data[idx] + 0.587 * data[idx+1] + 0.114 * data[idx+2];
+                    const gray = 0.299 * data[idx] + 0.587 * data[idx + 1] + 0.114 * data[idx + 2];
                     if (gray < threshold) {
                         found = true;
                         if (x < minX) minX = x;
@@ -401,7 +787,9 @@
             tempImg.onload = function() {
                 editorImg.src = src;
                 editorImg.style.display = 'block';
-                if (cropper) { cropper.destroy(); cropper = null; isCropperReady = false; }
+                if (cropper) { cropper.destroy();
+                    cropper = null;
+                    isCropperReady = false; }
                 setTimeout(() => { initCropper(rect); }, 50);
             };
             tempImg.onerror = function() {
@@ -478,19 +866,21 @@
             const imgData = ctx.getImageData(0, 0, canvas.width, canvas.height);
             const d = imgData.data;
             for (let i = 0; i < d.length; i += 4) {
-                let r = d[i], g = d[i+1], b = d[i+2];
+                let r = d[i],
+                    g = d[i + 1],
+                    b = d[i + 2];
                 if (currentFilter === 'bw') {
                     let gray = 0.299 * r + 0.587 * g + 0.114 * b;
                     let v = gray > 125 ? 255 : (gray * 0.75);
-                    d[i] = d[i+1] = d[i+2] = v;
+                    d[i] = d[i + 1] = d[i + 2] = v;
                 } else if (currentFilter === 'enhance') {
                     d[i] = Math.min(255, (r - 128) * 1.35 + 128);
-                    d[i+1] = Math.min(255, (g - 128) * 1.35 + 128);
-                    d[i+2] = Math.min(255, (b - 128) * 1.35 + 128);
+                    d[i + 1] = Math.min(255, (g - 128) * 1.35 + 128);
+                    d[i + 2] = Math.min(255, (b - 128) * 1.35 + 128);
                 } else if (currentFilter === 'magic') {
                     d[i] = Math.min(255, (r - 128) * 1.5 + 128);
-                    d[i+1] = Math.min(255, (g - 128) * 1.5 + 128);
-                    d[i+2] = Math.min(255, (b - 128) * 1.5 + 128);
+                    d[i + 1] = Math.min(255, (g - 128) * 1.5 + 128);
+                    d[i + 2] = Math.min(255, (b - 128) * 1.5 + 128);
                 }
             }
             ctx.putImageData(imgData, 0, 0);
@@ -503,26 +893,30 @@
             const pad = raw.endsWith('==') ? 2 : (raw.endsWith('=') ? 1 : 0);
             return Math.round((raw.length * 3) / 4) - pad;
         }
+
         function formatBytes(bytes) {
             const kb = bytes / 1024;
             if (kb >= 1000) return `${(kb / 1024).toFixed(1)} MB`;
             return `${Math.round(kb)} KB`;
         }
 
-        // ─── Compressor with configurable parameters ──────────────
+        // ─── Compressor ────────────────────────────────────────────
         function compressImageToSize(sourceCanvas, targetBytes, maxDimStart, qualityFloor, dimStep, minDim) {
             let maxDim = maxDimStart || 1100;
             let bestDataUrl = null;
             let bestSize = Infinity;
 
             while (true) {
-                let w = sourceCanvas.width, h = sourceCanvas.height;
+                let w = sourceCanvas.width,
+                    h = sourceCanvas.height;
                 if (w > maxDim || h > maxDim) {
-                    if (w > h) { h = Math.round((h * maxDim) / w); w = maxDim; }
-                    else { w = Math.round((w * maxDim) / h); h = maxDim; }
+                    if (w > h) { h = Math.round((h * maxDim) / w);
+                        w = maxDim; } else { w = Math.round((w * maxDim) / h);
+                        h = maxDim; }
                 }
                 const tmp = document.createElement('canvas');
-                tmp.width = w; tmp.height = h;
+                tmp.width = w;
+                tmp.height = h;
                 const ctx = tmp.getContext('2d');
                 ctx.fillStyle = '#FFFFFF';
                 ctx.fillRect(0, 0, w, h);
@@ -555,15 +949,16 @@
             }
         }
 
-        // ─── Convenience wrappers ─────────────────────────────────
         function compressTo99KB(sourceCanvas) {
-            return compressImageToSize(sourceCanvas, TARGET_BYTES, COMPRESS_99KB.maxDimStart, COMPRESS_99KB.qualityFloor, COMPRESS_99KB.dimStep, COMPRESS_99KB.minDim);
-        }
-        function compressToShare(sourceCanvas) {
-            return compressImageToSize(sourceCanvas, SHARE_TARGET_BYTES, COMPRESS_SHARE.maxDimStart, COMPRESS_SHARE.qualityFloor, COMPRESS_SHARE.dimStep, COMPRESS_SHARE.minDim);
+            return compressImageToSize(sourceCanvas, TARGET_BYTES, COMPRESS_99KB.maxDimStart, COMPRESS_99KB.qualityFloor,
+                COMPRESS_99KB.dimStep, COMPRESS_99KB.minDim);
         }
 
-        // ─── HD Quality: full resolution, max quality ────────────
+        function compressToShare(sourceCanvas) {
+            return compressImageToSize(sourceCanvas, SHARE_TARGET_BYTES, COMPRESS_SHARE.maxDimStart, COMPRESS_SHARE
+                .qualityFloor, COMPRESS_SHARE.dimStep, COMPRESS_SHARE.minDim);
+        }
+
         function getOriginalQualityDataUrl(sourceCanvas) {
             const tmp = document.createElement('canvas');
             tmp.width = sourceCanvas.width;
@@ -620,7 +1015,8 @@
             const pages = getActivePages();
             pagesGrid.innerHTML = '';
             if (!pages.length) {
-                pagesGrid.innerHTML = `<div style="grid-column:1/-1;text-align:center;color:#64748b;padding:1.5rem 0;font-size:0.9rem;">No pages yet. Scan a document to get started.</div>`;
+                pagesGrid.innerHTML =
+                    `<div style="grid-column:1/-1;text-align:center;color:#64748b;padding:1.5rem 0;font-size:0.9rem;">No pages yet. Scan a document to get started.</div>`;
                 sizeWarningArea.innerHTML = '';
                 return;
             }
@@ -653,14 +1049,17 @@
             let warnHtml = '';
             if (selectedSizeMode === 'compressed') {
                 if (anyOverTarget) {
-                    warnHtml = `<div class="size-warning">⚠️ <strong>Some pages exceed 99 KB.</strong> They will be re‑compressed on export/share.</div>`;
+                    warnHtml =
+                        `<div class="size-warning">⚠️ <strong>Some pages exceed 99 KB.</strong> They will be re‑compressed on export/share.</div>`;
                 } else if (pages.length > 1) {
-                    warnHtml = `<div class="size-warning success">✅ All pages ≤ 99 KB · Total: ${formatBytes(totalSize)} (${pages.length} pages)</div>`;
+                    warnHtml =
+                        `<div class="size-warning success">✅ All pages ≤ 99 KB · Total: ${formatBytes(totalSize)} (${pages.length} pages)</div>`;
                 } else {
                     warnHtml = `<div class="size-warning success">✅ Page size: ${formatBytes(totalSize)} ≤ 99 KB</div>`;
                 }
             } else {
-                warnHtml = `<div class="size-warning info">💎 HD Mode · Total: ${formatBytes(totalSize)} · Full resolution, maximum quality.</div>`;
+                warnHtml =
+                    `<div class="size-warning info">💎 HD Mode · Total: ${formatBytes(totalSize)} · Full resolution, maximum quality.</div>`;
             }
             sizeWarningArea.innerHTML = warnHtml;
             updatePageCount();
@@ -715,7 +1114,7 @@
             });
         }
 
-        // ─── Generate PDF with target size ────────────────────────
+        // ─── Generate PDF ──────────────────────────────────────────
         async function generatePDFBlob(targetBytes, useCompressed = true) {
             if (!scannedPagesOriginal.length) return null;
             const { jsPDF } = window.jspdf;
@@ -728,7 +1127,6 @@
             }
 
             const pageCount = imageDataUrls.length;
-            // Ensure each image is under target (if compressed)
             if (useCompressed) {
                 const ensured = [];
                 for (let i = 0; i < pageCount; i++) {
@@ -739,7 +1137,8 @@
                     } else {
                         try {
                             const origCanvas = await loadImageToCanvas(scannedPagesOriginal[i]);
-                            const newComp = compressImageToSize(origCanvas, targetBytes, COMPRESS_99KB.maxDimStart, COMPRESS_99KB.qualityFloor, COMPRESS_99KB.dimStep, COMPRESS_99KB.minDim);
+                            const newComp = compressImageToSize(origCanvas, targetBytes, COMPRESS_99KB.maxDimStart,
+                                COMPRESS_99KB.qualityFloor, COMPRESS_99KB.dimStep, COMPRESS_99KB.minDim);
                             ensured.push(newComp);
                             scannedPagesCompressed[i] = newComp;
                         } catch (e) {
@@ -762,12 +1161,10 @@
             let pdfBlob = buildPDF(imageDataUrls);
             let size = pdfBlob.size;
 
-            // If not compressed or size already under target, return
             if (!useCompressed || size <= targetBytes) {
                 return pdfBlob;
             }
 
-            // Otherwise, recompress more aggressively
             let perPageTarget = Math.floor((targetBytes - 2048) / pageCount);
             let attempts = 0;
             const MAX_ATTEMPTS = 8;
@@ -781,7 +1178,8 @@
                 for (let i = 0; i < pageCount; i++) {
                     try {
                         const origCanvas = await loadImageToCanvas(scannedPagesOriginal[i]);
-                        const compressed = compressImageToSize(origCanvas, perPageTarget, COMPRESS_99KB.maxDimStart, COMPRESS_99KB.qualityFloor, COMPRESS_99KB.dimStep, COMPRESS_99KB.minDim);
+                        const compressed = compressImageToSize(origCanvas, perPageTarget, COMPRESS_99KB.maxDimStart,
+                            COMPRESS_99KB.qualityFloor, COMPRESS_99KB.dimStep, COMPRESS_99KB.minDim);
                         newImages.push(compressed);
                         if (getByteSize(compressed) > perPageTarget) allGood = false;
                     } catch (e) {
@@ -804,7 +1202,7 @@
             return pdfBlob;
         }
 
-        // ─── Exports ───────────────────────────────────────────────
+        // ─── Exports (Download) ────────────────────────────────────
         async function exportPDF() {
             if (!scannedPagesOriginal.length) { showToast('❌ No pages to export.', 2500); return; }
             showToast('⏳ Generating PDF…', 3000);
@@ -870,43 +1268,58 @@
             renderPages();
         }
 
-        // ─── Share functions (always compress to 90KB) ────────────
+        // ─── SHARE: respects the selected mode ────────────────────
+        // If HD mode → share original quality (no compression)
+        // If 99KB mode → compress to 90KB for sharing
+
         async function sharePDF() {
             if (!scannedPagesOriginal.length) { showToast('❌ No pages to share.', 2500); return; }
-            showToast('⏳ Preparing PDF for sharing (≤90 KB)…', 3000);
+
+            const useHd = (selectedSizeMode === 'original');
+            const label = useHd ? 'HD' : '99KB';
+            showToast(`⏳ Preparing ${label} PDF for sharing…`, 3000);
+
             try {
-                // Always use compressed mode for share
-                const blob = await generatePDFBlob(SHARE_TARGET_BYTES, true);
-                if (!blob) throw new Error('PDF generation failed');
-                const size = blob.size;
-                if (size > SHARE_TARGET_BYTES) {
-                    showToast(`⚠️ PDF is ${formatBytes(size)} — still exceeds 90 KB.`, 4000);
+                let blob;
+                if (useHd) {
+                    // HD mode: use original quality, no compression
+                    blob = await generatePDFBlob(Infinity, false);
                 } else {
-                    showToast(`✅ PDF ready: ${formatBytes(size)}`, 2000);
+                    // 99KB mode: compress to 90KB
+                    blob = await generatePDFBlob(SHARE_TARGET_BYTES, true);
                 }
-                const file = new File([blob], `Scan_${Date.now()}.pdf`, { type: 'application/pdf' });
+                if (!blob) throw new Error('PDF generation failed');
+
+                const size = blob.size;
+                if (!useHd && size > SHARE_TARGET_BYTES) {
+                    showToast(`⚠️ PDF is ${formatBytes(size)} — exceeds 90 KB.`, 4000);
+                } else {
+                    showToast(`✅ ${label} PDF ready: ${formatBytes(size)}`, 2000);
+                }
+
+                const file = new File([blob], `Scan_${label}_${Date.now()}.pdf`, { type: 'application/pdf' });
 
                 if (navigator.canShare && navigator.canShare({ files: [file] })) {
-                    await navigator.share({ files: [file], title: 'Scanned Document' });
-                    showToast('📤 PDF shared!', 2000);
+                    await navigator.share({ files: [file], title: `Scanned Document (${label})` });
+                    showToast(`📤 ${label} PDF shared!`, 2000);
                 } else {
                     const link = document.createElement('a');
                     link.href = URL.createObjectURL(blob);
-                    link.download = `Scan_${Date.now()}.pdf`;
+                    link.download = `Scan_${label}_${Date.now()}.pdf`;
                     document.body.appendChild(link);
                     link.click();
                     document.body.removeChild(link);
                     setTimeout(() => URL.revokeObjectURL(link.href), 10000);
-                    showToast('📥 PDF downloaded (share not supported).', 2500);
+                    showToast(`📥 ${label} PDF downloaded (share not supported).`, 2500);
                 }
                 renderPages();
             } catch (e) {
                 if (e.name === 'AbortError') { showToast('Share cancelled.', 1500); } else {
                     console.error('Share PDF error:', e);
                     showToast('❌ Failed to share PDF: ' + e.message, 4000);
-                    // Fallback download
                     try {
-                        const blob = await generatePDFBlob(SHARE_TARGET_BYTES, true);
+                        const useHdFallback = (selectedSizeMode === 'original');
+                        const blob = await generatePDFBlob(useHdFallback ? Infinity : SHARE_TARGET_BYTES, !useHdFallback);
                         if (blob) {
                             const link = document.createElement('a');
                             link.href = URL.createObjectURL(blob);
@@ -924,35 +1337,48 @@
         async function shareJPG() {
             const pages = getActivePages();
             if (!pages.length) { showToast('❌ No pages to share.', 2500); return; }
+
+            const useHd = (selectedSizeMode === 'original');
+            const label = useHd ? 'HD' : '99KB';
+            showToast(`⏳ Preparing ${label} JPGs for sharing…`, 3000);
+
             try {
-                // Always compress each page to 90KB for sharing
-                const shareTarget = SHARE_TARGET_BYTES;
-                const ensured = [];
-                for (let i = 0; i < pages.length; i++) {
-                    const img = pages[i];
-                    const bytes = getByteSize(img);
-                    if (bytes <= shareTarget) {
-                        ensured.push(img);
-                    } else {
-                        try {
-                            const origCanvas = await loadImageToCanvas(scannedPagesOriginal[i]);
-                            const newComp = compressImageToSize(origCanvas, shareTarget, COMPRESS_SHARE.maxDimStart, COMPRESS_SHARE.qualityFloor, COMPRESS_SHARE.dimStep, COMPRESS_SHARE.minDim);
-                            ensured.push(newComp);
-                        } catch (e) {
+                let imageDataUrls;
+                if (useHd) {
+                    // HD mode: use original images directly
+                    imageDataUrls = scannedPagesOriginal.slice();
+                } else {
+                    // 99KB mode: compress to 90KB
+                    const ensured = [];
+                    for (let i = 0; i < pages.length; i++) {
+                        const img = pages[i];
+                        const bytes = getByteSize(img);
+                        if (bytes <= SHARE_TARGET_BYTES) {
                             ensured.push(img);
+                        } else {
+                            try {
+                                const origCanvas = await loadImageToCanvas(scannedPagesOriginal[i]);
+                                const newComp = compressImageToSize(origCanvas, SHARE_TARGET_BYTES, COMPRESS_SHARE
+                                    .maxDimStart, COMPRESS_SHARE.qualityFloor, COMPRESS_SHARE.dimStep, COMPRESS_SHARE
+                                    .minDim);
+                                ensured.push(newComp);
+                            } catch (e) {
+                                ensured.push(img);
+                            }
                         }
                     }
+                    imageDataUrls = ensured;
                 }
 
-                const files = await Promise.all(ensured.map(async (dataUrl, idx) => {
+                const files = await Promise.all(imageDataUrls.map(async (dataUrl, idx) => {
                     const response = await fetch(dataUrl);
                     const blob = await response.blob();
-                    return new File([blob], `Scan_Share_Pg${idx+1}.jpg`, { type: 'image/jpeg' });
+                    return new File([blob], `Scan_${label}_Pg${idx+1}.jpg`, { type: 'image/jpeg' });
                 }));
 
                 if (navigator.canShare && navigator.canShare({ files })) {
-                    await navigator.share({ files: files, title: 'Scanned Pages' });
-                    showToast('📤 JPGs shared!', 2000);
+                    await navigator.share({ files: files, title: `Scanned Pages (${label})` });
+                    showToast(`📤 ${label} JPGs shared!`, 2000);
                 } else {
                     files.forEach((file) => {
                         const link = document.createElement('a');
@@ -962,16 +1388,15 @@
                         link.click();
                         document.body.removeChild(link);
                     });
-                    showToast('📥 JPGs downloaded (share not supported).', 2500);
+                    showToast(`📥 ${label} JPGs downloaded (share not supported).`, 2500);
                 }
                 renderPages();
             } catch (e) {
                 if (e.name === 'AbortError') { showToast('Share cancelled.', 1500); } else {
                     console.error('Share JPG error:', e);
                     showToast('❌ Failed to share JPGs: ' + e.message, 4000);
-                    // Fallback download
                     try {
-                        const fallbackPages = ensured || pages;
+                        const fallbackPages = imageDataUrls || pages;
                         fallbackPages.forEach((src, idx) => {
                             const link = document.createElement('a');
                             link.href = src;
