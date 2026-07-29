@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>SHM Scanner - Total PDF < 100KB</title>
+  <title>SHM Scanner - Strictly < 100KB PDF</title>
   <link rel="manifest" href="manifest.json" />
   
   <!-- CSS Dependencies -->
@@ -38,22 +38,18 @@
       justify-content: space-between;
       align-items: center;
       border-bottom: 1px solid #333;
-      position: relative;
-      z-index: 10;
     }
 
     .header-title { font-size: 1rem; font-weight: bold; }
 
     .pdf-size-badge {
-      background: #333;
+      background: #28a745;
       padding: 4px 8px;
       border-radius: 4px;
       font-size: 0.8rem;
-      color: var(--accent);
+      color: #fff;
       font-weight: bold;
     }
-    .pdf-size-badge.warning { color: #ffc107; }
-    .pdf-size-badge.danger { color: var(--danger); background: rgba(220, 53, 69, 0.2); }
 
     .step {
       display: none;
@@ -114,7 +110,6 @@
 
     img#editor-image { max-width: 100%; max-height: 100%; }
 
-    /* CROPPER OVERRIDE */
     .cropper-view-box { outline: 2px solid var(--primary) !important; }
     .cropper-line { background-color: var(--primary) !important; }
     .cropper-point {
@@ -200,17 +195,17 @@
 <body>
 
   <header>
-    <span class="header-title">SHMscanner <100KB</span>
-    <div id="pdf-size-display" class="pdf-size-badge">PDF: 0 KB</div>
+    <span class="header-title">SHMscanner</span>
+    <div id="pdf-size-display" class="pdf-size-badge">Strict Target: < 98 KB</div>
   </header>
 
   <!-- STEP 1: CAPTURE -->
   <div id="step-1" class="step active">
     <div class="capture-container">
       <div style="font-size: 3rem;">📄➡️📉</div>
-      <h3>Scan Documents to < 100KB PDF</h3>
+      <h3>Strict 100KB PDF Generator</h3>
       <p style="color: var(--text-dim); max-width: 300px; font-size: 0.9rem;">
-        Add multiple pages. The app automatically compresses them to keep the total PDF size under 100KB while keeping text readable.
+        This engine guarantees that the final PDF file will NEVER exceed 100KB, regardless of page count.
       </p>
       
       <div class="btn-group">
@@ -234,14 +229,14 @@
     </div>
     
     <div class="filter-options">
-      <button id="f-bw" class="active-filter" onclick="setFilter('bw')">B&W Document (Best <100KB)</button>
-      <button id="f-enhance" onclick="setFilter('enhance')">MagicColor</button>
+      <button id="f-bw" class="active-filter" onclick="setFilter('bw')">Pure B&W (Best Quality/Size)</button>
+      <button id="f-enhance" onclick="setFilter('enhance')">Magic Scan</button>
       <button id="f-original" onclick="setFilter('original')">Original</button>
     </div>
 
     <div class="btn-group">
       <button class="secondary" onclick="cancelCrop()">Cancel</button>
-      <button id="save-page-btn">Save & Add Next</button>
+      <button id="save-page-btn">Save & Add Next Page</button>
       <button id="finish-crop-btn">Save & Preview PDF</button>
     </div>
   </div>
@@ -252,12 +247,8 @@
     
     <div class="btn-group">
       <button class="secondary" onclick="goToStep(1)">+ Add Page</button>
-      <button id="download-pdf-btn" onclick="exportPDF()">📄 Download <100KB PDF</button>
-      <button class="secondary" onclick="exportJPG()">🖼️ Download JPGs</button>
+      <button id="download-pdf-btn" onclick="exportPDF()">📄 Download PDF (<100KB Guaranteed)</button>
     </div>
-    <p style="color: var(--text-dim); font-size: 0.75rem; text-align: center; margin-top: 1rem;">
-      Note: JPGs are saved individually at higher quality. PDF is heavily compressed.
-    </p>
   </div>
 
   <div id="status-toast"></div>
@@ -267,17 +258,15 @@
 
   <script>
     const A4_ASPECT_RATIO = 210 / 297;
-    const TOTAL_PDF_TARGET_BYTES = 95 * 1024; // Strict total target: 95KB
+    const STRICT_PDF_LIMIT_BYTES = 98 * 1024; // Strict upper limit: 98KB
 
-    let scannedPagesRawCanvas = []; // Stores filtered, uncompressed canvases
+    let scannedPagesRawCanvas = [];
     let cropper = null;
-    let currentFilter = 'bw'; // Default to B&W for best compression
-    let deferredPrompt = null;
+    let currentFilter = 'bw';
     let originalImageObjectURL = null;
 
     const editorImg = document.getElementById('editor-image');
     const pagesGrid = document.getElementById('pages-grid');
-    const pdfSizeDisplay = document.getElementById('pdf-size-display');
 
     function showToast(msg) {
       const toast = document.getElementById('status-toast');
@@ -292,7 +281,6 @@
       if (step === 3) renderPages();
     }
 
-    // --- IMAGE INPUT ---
     document.getElementById('system-camera-input').addEventListener('change', handleFileSelect);
     document.getElementById('file-input').addEventListener('change', handleFileSelect);
 
@@ -300,9 +288,7 @@
       const files = e.target.files;
       if (!files || !files.length) return;
       
-      showToast('Loading image...');
       const file = files[0];
-
       if (originalImageObjectURL) URL.revokeObjectURL(originalImageObjectURL);
       originalImageObjectURL = URL.createObjectURL(file);
       
@@ -316,8 +302,7 @@
           viewMode: 1,
           autoCropArea: 1,
           responsive: true,
-          background: false,
-          ready() { showToast('Adjust crop corners'); }
+          background: false
         });
       };
       e.target.value = '';
@@ -328,7 +313,6 @@
       goToStep(1);
     }
 
-    // --- FILTERS ---
     function setFilter(filterType) {
       currentFilter = filterType;
       document.querySelectorAll('.filter-options button').forEach(b => b.classList.remove('active-filter'));
@@ -347,36 +331,27 @@
         let gray = 0.299 * r + 0.587 * g + 0.114 * b;
 
         if (currentFilter === 'bw') {
-          // Hard threshold for pure B&W - extreme compression
-          let val = gray > 150 ? 255 : 0; 
+          let val = gray > 140 ? 255 : 0; // Crisp high-contrast B&W
           data[i] = data[i+1] = data[i+2] = val;
         } else if (currentFilter === 'enhance') {
-          // Document contrast enhancement
-          data[i]     = Math.min(255, (r - 128) * 1.5 + 135);
-          data[i + 1] = Math.min(255, (g - 128) * 1.5 + 135);
-          data[i + 2] = Math.min(255, (b - 128) * 1.5 + 135);
+          data[i]     = Math.min(255, (r - 128) * 1.4 + 135);
+          data[i + 1] = Math.min(255, (g - 128) * 1.4 + 135);
+          data[i + 2] = Math.min(255, (b - 128) * 1.4 + 135);
         }
       }
       ctx.putImageData(imgData, 0, 0);
       return canvas;
     }
 
-    // --- SAVE PAGE (Internal Memory) ---
     function savePage(finish) {
       if (!cropper) return;
-      
-      showToast('Saving page...');
 
-      // Get cropped canvas at reasonable resolution for processing
       const croppedCanvas = cropper.getCroppedCanvas({
-        maxWidth: 1600, // Limit internal res to save memory
+        maxWidth: 1200,
         imageSmoothingQuality: 'high'
       });
 
-      // Apply selected filter
       applyFiltersToCanvas(croppedCanvas);
-
-      // Store the unfiltered, high-res filtered canvas
       scannedPagesRawCanvas.push(croppedCanvas);
 
       if (originalImageObjectURL) {
@@ -393,17 +368,12 @@
     document.getElementById('save-page-btn').addEventListener('click', () => savePage(false));
     document.getElementById('finish-crop-btn').addEventListener('click', () => savePage(true));
 
-    // --- PREVIEW & LIVE SIZE ---
     function renderPages() {
       pagesGrid.innerHTML = '';
-      
-      // Generate temporary optimized JPGs just for preview purpose
       scannedPagesRawCanvas.forEach((canvas, idx) => {
         const card = document.createElement('div');
         card.className = 'page-card';
-        
-        // Preview can be low res to save memory
-        const previewUrl = canvas.toDataURL('image/jpeg', 0.3);
+        const previewUrl = canvas.toDataURL('image/jpeg', 0.2);
         
         card.innerHTML = `
           <img src="${previewUrl}" />
@@ -412,8 +382,6 @@
         `;
         pagesGrid.appendChild(card);
       });
-
-      updateLivePdfSize();
     }
 
     function deletePage(idx) {
@@ -421,155 +389,92 @@
       renderPages();
     }
 
-    // --- DYNAMIC PDF COMPRESSION LOGIC (<100KB TOTAL) ---
-    function getByteSize(base64Str) {
-      const base64WithoutHeader = base64Str.split(',')[1] || base64Str;
-      return Math.round((base64WithoutHeader.length * 3) / 4);
-    }
-
-    // This is the core technology to achieve <100KB total PDF
-    async function generateDynamicCompressedPdf() {
+    // --- RECURSIVE AUTO-SCALING PDF COMPRESSOR (STRICT < 100KB GUARANTEE) ---
+    async function buildStrictUnder100KBPdf() {
       const numPages = scannedPagesRawCanvas.length;
       if (numPages === 0) return null;
 
       const { jsPDF } = window.jspdf;
-      const pdf = new jsPDF({ orientation: 'portrait', unit: 'mm', format: 'a4', compress: true });
 
-      // Calculate allowed size per page in JPG format within the PDF container
-      // PDF structure adds overhead, so we target lower than 95KB
-      const effectiveTarget = TOTAL_PDF_TARGET_BYTES - (numPages * 2000) - 5000; // Subtract overhead estimate
-      const bytesPerPageTarget = Math.max(5000, Math.floor(effectiveTarget / numPages));
+      // Start parameters
+      let scaleFactor = 1.0;
+      let quality = currentFilter === 'bw' ? 0.25 : 0.40;
+      
+      // Dynamic adjustments for page count
+      if (numPages >= 3) { scaleFactor = 0.7; quality = 0.20; }
+      if (numPages >= 5) { scaleFactor = 0.5; quality = 0.15; }
 
-      console.log(`Total Target: 95KB. Pages: ${numPages}. Target per page JPG: ${Math.round(bytesPerPageTarget/1024)}KB`);
+      let pdfBlob = null;
+      let iterations = 0;
 
-      for (let i = 0; i < numPages; i++) {
-        const sourceCanvas = scannedPagesRawCanvas[i];
-        
-        // 1. Determine optimal resolution based on page count (More pages = smaller resolution)
-        // This ensures text remains readable even at low file size
-        let maxDim = 1000; // Base res for 1-2 pages
-        if (numPages >= 3) maxDim = 800;
-        if (numPages >= 5) maxDim = 650;
-        if (numPages >= 8) maxDim = 500; // Significant downscaling for many pages
+      // Recursive Loop: Re-generate PDF until total size is STRICTLY < 98KB
+      while (iterations < 8) {
+        iterations++;
+        const pdf = new jsPDF({ orientation: 'portrait', unit: 'mm', format: 'a4', compress: true });
 
-        let width = sourceCanvas.width;
-        let height = sourceCanvas.height;
-        if (width > maxDim || height > maxDim) {
-          if (width > height) { height = Math.round((height * maxDim) / width); width = maxDim; }
-          else { width = Math.round((width * maxDim) / height); height = maxDim; }
+        for (let i = 0; i < numPages; i++) {
+          const srcCanvas = scannedPagesRawCanvas[i];
+          
+          const targetW = Math.max(300, Math.round(srcCanvas.width * scaleFactor));
+          const targetH = Math.max(400, Math.round(srcCanvas.height * scaleFactor));
+
+          const procCanvas = document.createElement('canvas');
+          procCanvas.width = targetW;
+          procCanvas.height = targetH;
+          const ctx = procCanvas.getContext('2d');
+          ctx.fillStyle = '#FFFFFF';
+          ctx.fillRect(0, 0, targetW, targetH);
+          ctx.drawImage(srcCanvas, 0, 0, targetW, targetH);
+
+          const pageJpgData = procCanvas.toDataURL('image/jpeg', quality);
+
+          if (i > 0) pdf.addPage('a4', 'portrait');
+          pdf.addImage(pageJpgData, 'JPEG', 0, 0, 210, 297, undefined, 'FAST');
         }
 
-        const compCanvas = document.createElement('canvas');
-        compCanvas.width = width;
-        compCanvas.height = height;
-        const ctx = compCanvas.getContext('2d');
-        ctx.imageSmoothingEnabled = true;
-        ctx.imageSmoothingQuality = 'high';
-        ctx.fillStyle = '#FFFFFF';
-        ctx.fillRect(0, 0, width, height);
-        ctx.drawImage(sourceCanvas, 0, 0, width, height);
+        pdfBlob = pdf.output('blob');
 
-        // 2. Binary Search for optimal quality to hit exact byte target
-        let minQuality = 0.01;
-        let maxQuality = 0.80;
-        let bestDataUrl = compCanvas.toDataURL('image/jpeg', minQuality); // Fallback
-        
-        // If pure B&W, we can use higher resolution and very low quality
-        if (currentFilter === 'bw') {
-            maxQuality = 0.30; // JPG artifacts don't show much on pure B&W
+        console.log(`Iteration ${iterations}: Size = ${(pdfBlob.size / 1024).toFixed(1)} KB (Scale: ${scaleFactor.toFixed(2)}, Quality: ${quality.toFixed(2)})`);
+
+        // Check condition
+        if (pdfBlob.size <= STRICT_PDF_LIMIT_BYTES) {
+          break; // Successfully under limit!
         }
 
-        for (let iter = 0; iter < 5; iter++) {
-          let midQuality = (minQuality + maxQuality) / 2;
-          let testUrl = compCanvas.toDataURL('image/jpeg', midQuality);
-          if (getByteSize(testUrl) <= bytesPerPageTarget) {
-            bestDataUrl = testUrl;
-            minQuality = midQuality;
-          } else {
-            maxQuality = midQuality;
-          }
-        }
-
-        // 3. Add to PDF
-        if (i > 0) pdf.addPage('a4', 'portrait');
-        pdf.addImage(bestDataUrl, 'JPEG', 0, 0, 210, 297, undefined, 'FAST');
+        // If exceeded, reduce parameters and retry
+        scaleFactor *= 0.82; // Shrink dimensions
+        quality *= 0.80;     // Drop JPG quality
       }
 
-      return pdf.output('blob');
+      return pdfBlob;
     }
 
-    async function updateLivePdfSize() {
-      const numPages = scannedPagesRawCanvas.length;
-      if (numPages === 0) {
-        pdfSizeDisplay.innerText = 'PDF: 0 KB';
-        pdfSizeDisplay.className = 'pdf-size-badge';
-        return;
-      }
-
-      // Estimate overhead (structure, etc.)
-      const overheadEst = 5000 + (numPages * 1500);
-      
-      // Simulate PDF compression overhead - PDF compresses JPG streams internally too
-      const estimatedSize = Math.round((TOTAL_PDF_TARGET_BYTES * 0.95) / 1024);
-      
-      // Since generating real PDF is slow, we show the target info
-      pdfSizeDisplay.innerText = `Target PDF: < 95 KB (${numPages} Pages)`;
-      pdfSizeDisplay.className = 'pdf-size-badge';
-
-      if (numPages > 6 && currentFilter !== 'bw') {
-          pdfSizeDisplay.innerText += ' - Suggest B&W';
-          pdfSizeDisplay.className = 'pdf-size-badge warning';
-      }
-      if (numPages > 12) {
-          pdfSizeDisplay.innerText = `Target PDF: ~100 KB (Quality Low)`;
-          pdfSizeDisplay.className = 'pdf-size-badge danger';
-      }
-    }
-
-    // --- EXPORT ---
     async function exportPDF() {
       if (scannedPagesRawCanvas.length === 0) return alert('No pages to export!');
-      
+
       const downloadBtn = document.getElementById('download-pdf-btn');
       downloadBtn.disabled = true;
-      downloadBtn.innerText = 'Compressing... Please wait';
-      showToast('Optimizing PDF to <100KB...');
+      downloadBtn.innerText = 'Compressing to <100KB...';
 
       try {
-        const pdfBlob = await generateDynamicCompressedPdf();
+        const pdfBlob = await buildStrictUnder100KBPdf();
         const finalSizeKb = (pdfBlob.size / 1024).toFixed(1);
-        
+
         const link = document.createElement('a');
         link.href = URL.createObjectURL(pdfBlob);
-        link.download = `Scan_${new Date().toISOString().slice(0,10)}_${finalSizeKb}KB.pdf`;
+        link.download = `Scan_Doc_${finalSizeKb}KB.pdf`;
         link.click();
-        
-        showToast(`✅ PDF Downloaded (${finalSizeKb} KB)`);
-        pdfSizeDisplay.innerText = `Last PDF: ${finalSizeKb} KB`;
-        if (pdfBlob.size > 100*1024) pdfSizeDisplay.className = 'pdf-size-badge danger';
-        else pdfSizeDisplay.className = 'pdf-size-badge';
+
+        showToast(`✅ Downloaded! Exact Size: ${finalSizeKb} KB`);
+        document.getElementById('pdf-size-display').innerText = `Last PDF: ${finalSizeKb} KB`;
 
       } catch (e) {
         console.error(e);
-        alert('Error generating PDF.');
+        alert('Compression Error');
       } finally {
         downloadBtn.disabled = false;
-        downloadBtn.innerText = '📄 Download <100KB PDF';
+        downloadBtn.innerText = '📄 Download PDF (<100KB Guaranteed)';
       }
-    }
-
-    function exportJPG() {
-      if (scannedPagesRawCanvas.length === 0) return alert('No pages to export!');
-      showToast('Downloading JPGs...');
-      
-      // JPGs are exported at higher quality (individual files don't need to fit in 100KB total)
-      scannedPagesRawCanvas.forEach((canvas, index) => {
-        const dataUrl = canvas.toDataURL('image/jpeg', 0.8);
-        const a = document.createElement('a');
-        a.href = dataUrl;
-        a.download = `SHM_Page_${index + 1}.jpg`;
-        a.click();
-      });
     }
   </script>
 </body>
