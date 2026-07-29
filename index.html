@@ -3,1456 +3,191 @@
 <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
-    <title>SHM Scanner - HD vs 99KB</title>
-    <link rel="manifest" href="manifest.json" />
+    <title>SHM Scanner - Pro</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.5.13/cropper.min.css" />
     <style>
-        * {
-            box-sizing: border-box;
-            margin: 0;
-            padding: 0;
-        }
-        body {
-            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
-            background: #f5f7fa;
-            color: #1e293b;
-            height: 100vh;
-            overflow: hidden;
-            display: flex;
-            flex-direction: column;
-        }
-        header {
-            background: #ffffff;
-            padding: 0.8rem 1.2rem;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            border-bottom: 1px solid #e2e8f0;
-            flex-shrink: 0;
-            box-shadow: 0 1px 4px rgba(0, 0, 0, 0.04);
-        }
-        .header-title {
-            font-size: 1.2rem;
-            font-weight: 700;
-            color: #0f172a;
-            display: flex;
-            align-items: center;
-            gap: 0.5rem;
-        }
-        .header-title span {
-            background: #2563eb;
-            color: white;
-            font-size: 0.7rem;
-            padding: 0.1rem 0.5rem;
-            border-radius: 12px;
-            margin-left: 0.3rem;
-        }
-        .header-install-btn {
-            background: #2563eb;
-            color: white;
-            border: none;
-            padding: 0.35rem 0.9rem;
-            border-radius: 20px;
-            font-weight: 600;
-            font-size: 0.8rem;
-            cursor: pointer;
-            transition: 0.2s;
-        }
-        .header-install-btn:active {
-            transform: scale(0.95);
-        }
-        .step {
-            display: none;
-            flex: 1;
-            flex-direction: column;
-            padding: 1rem 1.2rem 1.2rem;
-            overflow-y: auto;
-            background: #f8fafc;
-        }
-        .step.active {
-            display: flex;
-        }
-        .capture-container {
-            flex: 1;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-            gap: 1.5rem;
-            text-align: center;
-        }
-        .capture-container .icon-big {
-            font-size: 4rem;
-            color: #2563eb;
-        }
-        .capture-container h2 {
-            font-weight: 700;
-            font-size: 1.5rem;
-            color: #0f172a;
-        }
-        .capture-container p {
-            color: #475569;
-            max-width: 320px;
-            font-size: 0.95rem;
-        }
-        .btn-group {
-            display: flex;
-            gap: 0.8rem;
-            flex-wrap: wrap;
-            justify-content: center;
-            margin-top: 0.5rem;
-        }
-        .btn {
-            background: #2563eb;
-            color: white;
-            border: none;
-            padding: 0.8rem 1.6rem;
-            border-radius: 40px;
-            font-weight: 600;
-            font-size: 0.95rem;
-            cursor: pointer;
-            display: inline-flex;
-            align-items: center;
-            gap: 0.5rem;
-            transition: 0.2s;
-            min-height: 48px;
-            box-shadow: 0 4px 10px rgba(37, 99, 235, 0.2);
-        }
-        .btn:active {
-            transform: scale(0.96);
-            opacity: 0.8;
-        }
-        .btn-outline {
-            background: transparent;
-            color: #1e293b;
-            border: 2px solid #cbd5e1;
-            box-shadow: none;
-        }
-        .btn-outline:active {
-            background: #f1f5f9;
-        }
-        .btn-sm {
-            padding: 0.5rem 1rem;
-            font-size: 0.85rem;
-            min-height: 38px;
-        }
-        .btn-secondary {
-            background: #e2e8f0;
-            color: #1e293b;
-            box-shadow: none;
-        }
-        .btn-success {
-            background: #16a34a;
-            box-shadow: 0 4px 10px rgba(22, 163, 74, 0.25);
-        }
-        .btn-share {
-            background: #0ea5e9;
-            box-shadow: 0 4px 10px rgba(14, 165, 233, 0.25);
-        }
-        .page-count-badge {
-            background: #e2e8f0;
-            padding: 0.3rem 1rem;
-            border-radius: 20px;
-            font-size: 0.85rem;
-            color: #1e293b;
-        }
-        .editor-container {
-            flex: 1;
-            min-height: 200px;
-            max-height: 58vh;
-            background: #e2e8f0;
-            border-radius: 16px;
-            overflow: hidden;
-            position: relative;
-            margin-bottom: 0.8rem;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-        }
-        .editor-container img {
-            max-width: 100%;
-            max-height: 100%;
-            display: block;
-        }
-        .editor-container .loading-placeholder {
-            color: #475569;
-            font-size: 1rem;
-            display: flex;
-            align-items: center;
-            gap: 0.5rem;
-            position: absolute;
-            z-index: 10;
-        }
-        .filter-bar {
-            display: flex;
-            gap: 0.4rem;
-            justify-content: center;
-            flex-wrap: wrap;
-            margin: 0.4rem 0 0.6rem;
-        }
-        .filter-bar button {
-            background: #e2e8f0;
-            color: #1e293b;
-            border: none;
-            padding: 0.3rem 0.9rem;
-            border-radius: 30px;
-            font-size: 0.78rem;
-            font-weight: 600;
-            cursor: pointer;
-            transition: 0.2s;
-            min-height: 32px;
-        }
-        .filter-bar button.active-filter {
-            background: #2563eb;
-            color: white;
-        }
-        .filter-bar button:active {
-            transform: scale(0.95);
-        }
-        .editor-actions {
-            display: flex;
-            gap: 0.6rem;
-            flex-wrap: wrap;
-            justify-content: center;
-        }
-        .size-mode-container {
-            background: white;
-            border-radius: 16px;
-            padding: 0.8rem 1rem;
-            margin-bottom: 0.8rem;
-            box-shadow: 0 1px 4px rgba(0, 0, 0, 0.04);
-            border: 1px solid #e2e8f0;
-        }
-        .size-mode-title {
-            font-weight: 600;
-            font-size: 0.85rem;
-            color: #475569;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-        }
-        .size-badge {
-            background: #2563eb;
-            color: white;
-            padding: 0.1rem 0.6rem;
-            border-radius: 12px;
-            font-size: 0.7rem;
-        }
-        .mode-toggle {
-            display: flex;
-            gap: 0.4rem;
-            margin-top: 0.4rem;
-        }
-        .mode-toggle button {
-            flex: 1;
-            background: #f1f5f9;
-            border: 2px solid transparent;
-            padding: 0.4rem 0.2rem;
-            border-radius: 10px;
-            font-weight: 600;
-            font-size: 0.8rem;
-            cursor: pointer;
-            transition: 0.2s;
-            color: #475569;
-        }
-        .mode-toggle button.active-mode {
-            background: #2563eb;
-            color: white;
-            border-color: #1e293b;
-        }
-        .size-mode-sub {
-            font-size: 0.7rem;
-            color: #64748b;
-            margin-top: 0.3rem;
-            display: block;
-        }
-        .size-warning {
-            background: #fef9c3;
-            border: 1px solid #facc15;
-            border-radius: 10px;
-            padding: 0.4rem 0.8rem;
-            font-size: 0.75rem;
-            color: #854d0e;
-            margin-bottom: 0.6rem;
-            display: flex;
-            align-items: center;
-            gap: 0.4rem;
-        }
-        .size-warning.success {
-            background: #dcfce7;
-            border-color: #22c55e;
-            color: #166534;
-        }
-        .size-warning.info {
-            background: #dbeafe;
-            border-color: #2563eb;
-            color: #1e40af;
-        }
-        .grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(110px, 1fr));
-            gap: 0.8rem;
-            width: 100%;
-            padding-bottom: 0.5rem;
-        }
-        .page-card {
-            background: white;
-            border-radius: 12px;
-            overflow: hidden;
-            border: 1px solid #e2e8f0;
-            box-shadow: 0 2px 6px rgba(0, 0, 0, 0.02);
-        }
-        .page-card-image-wrap {
-            position: relative;
-            aspect-ratio: 1/1.414;
-            background: #f1f5f9;
-        }
-        .page-card-image-wrap img {
-            width: 100%;
-            height: 100%;
-            object-fit: contain;
-        }
-        .page-card .delete-btn {
-            position: absolute;
-            top: 4px;
-            right: 4px;
-            background: rgba(239, 68, 68, 0.9);
-            color: white;
-            border: none;
-            border-radius: 50%;
-            width: 24px;
-            height: 24px;
-            font-weight: bold;
-            font-size: 0.8rem;
-            cursor: pointer;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-        }
-        .page-badge {
-            position: absolute;
-            bottom: 4px;
-            left: 4px;
-            background: rgba(0, 0, 0, 0.7);
-            color: white;
-            font-size: 0.55rem;
-            padding: 1px 6px;
-            border-radius: 4px;
-        }
-        .page-size-badge {
-            position: absolute;
-            bottom: 4px;
-            right: 4px;
-            font-size: 0.55rem;
-            padding: 1px 6px;
-            border-radius: 4px;
-            font-weight: 700;
-        }
-        .page-size-badge.ok {
-            background: #22c55e;
-            color: white;
-        }
-        .page-size-badge.over {
-            background: #ef4444;
-            color: white;
-        }
-        .page-size-badge.hd {
-            background: #2563eb;
-            color: white;
-        }
-        .rotate-card-btn {
-            background: #f1f5f9;
-            border: none;
-            border-top: 1px solid #e2e8f0;
-            padding: 0.3rem 0.4rem;
-            font-size: 0.7rem;
-            width: 100%;
-            cursor: pointer;
-            color: #475569;
-            font-weight: 500;
-        }
-        .rotate-card-btn:active {
-            background: #e2e8f0;
-        }
-        #status-toast {
-            display: none;
-            position: fixed;
-            bottom: 24px;
-            left: 50%;
-            transform: translateX(-50%);
-            background: #1e293b;
-            color: white;
-            padding: 10px 20px;
-            border-radius: 40px;
-            font-size: 0.9rem;
-            z-index: 9999;
-            box-shadow: 0 8px 20px rgba(0, 0, 0, 0.2);
-            max-width: 90%;
-            text-align: center;
-            pointer-events: none;
-        }
-        .install-modal-overlay {
-            display: none;
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100vw;
-            height: 100vh;
-            background: rgba(0, 0, 0, 0.6);
-            backdrop-filter: blur(4px);
-            z-index: 9999;
-            justify-content: center;
-            align-items: center;
-            padding: 1rem;
-        }
-        .install-modal-box {
-            background: white;
-            border-radius: 24px;
-            padding: 1.8rem;
-            max-width: 400px;
-            width: 100%;
-            text-align: center;
-            animation: modalSlideUp 0.3s ease-out;
-        }
-        @keyframes modalSlideUp {
-            from {
-                transform: translateY(30px);
-                opacity: 0;
-            }
-            to {
-                transform: translateY(0);
-                opacity: 1;
-            }
-        }
-        .install-modal-box .icon {
-            font-size: 3rem;
-        }
-        .install-modal-box h3 {
-            margin: 0.5rem 0 0.3rem;
-            font-size: 1.3rem;
-        }
-        .install-modal-box p {
-            color: #64748b;
-            font-size: 0.9rem;
-            margin-bottom: 1.2rem;
-        }
-        .install-modal-actions {
-            display: flex;
-            gap: 0.6rem;
-            justify-content: center;
-        }
-        .install-modal-actions button {
-            flex: 1;
-            padding: 0.6rem;
-            border-radius: 40px;
-            border: none;
-            font-weight: 600;
-            cursor: pointer;
-        }
-        .install-modal-actions .btn-close {
-            background: #e2e8f0;
-            color: #1e293b;
-        }
-        .install-modal-actions .btn-install {
-            background: #2563eb;
-            color: white;
-        }
-        .cropper-bg {
-            background-image: none !important;
-            background-color: #e2e8f0 !important;
-        }
-        .cropper-view-box {
-            outline: 3px solid #2563eb !important;
-        }
-        .cropper-line {
-            background-color: #2563eb !important;
-        }
-        .cropper-point {
-            background-color: #2563eb !important;
-            width: 22px !important;
-            height: 22px !important;
-            opacity: 1 !important;
-            border-radius: 50% !important;
-            border: 2px solid white !important;
-            box-shadow: 0 0 8px rgba(0, 0, 0, 0.3);
-        }
-        @media (max-width: 480px) {
-            .grid {
-                grid-template-columns: repeat(auto-fill, minmax(90px, 1fr));
-            }
-            .btn {
-                padding: 0.6rem 1.2rem;
-                font-size: 0.85rem;
-                min-height: 42px;
-            }
-            .header-title {
-                font-size: 1rem;
-            }
-            .capture-container h2 {
-                font-size: 1.2rem;
-            }
-            .editor-container {
-                max-height: 45vh;
-                min-height: 160px;
-            }
-        }
-        @media (max-height: 700px) {
-            .editor-container {
-                max-height: 40vh;
-                min-height: 140px;
-            }
-        }
-        .cropper-container img {
-            opacity: 1 !important;
-            display: block !important;
-        }
+        :root {
+            --primary: #2563eb; --primary-hover: #1d4ed8;
+            --bg: #f8fafc; --card: #ffffff;
+            --text: #1e293b; --text-dim: #64748b;
+        }
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; background: var(--bg); color: var(--text); height: 100vh; display: flex; flex-direction: column; overflow: hidden; }
+        
+        /* Layout */
+        header { background: rgba(255,255,255,0.8); backdrop-filter: blur(10px); padding: 0.75rem 1rem; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #e2e8f0; }
+        .step { display: none; flex: 1; overflow-y: auto; padding: 1rem; }
+        .step.active { display: flex; flex-direction: column; }
+        
+        /* UI Elements */
+        .btn { background: var(--primary); color: white; border: none; padding: 0.8rem 1.5rem; border-radius: 40px; font-weight: 600; cursor: pointer; transition: 0.2s; display: inline-flex; align-items: center; gap: 0.5rem; justify-content: center; }
+        .btn:active { transform: scale(0.95); opacity: 0.9; }
+        .btn-outline { background: transparent; border: 2px solid #cbd5e1; color: var(--text); }
+        .btn-group { display: flex; gap: 0.5rem; margin-top: 1rem; flex-wrap: wrap; justify-content: center; }
+
+        /* Loader Overlay */
+        #loader-overlay { display: none; position: fixed; inset: 0; background: rgba(255,255,255,0.9); z-index: 1000; flex-direction: column; align-items: center; justify-content: center; font-weight: bold; }
+        .spinner { width: 40px; height: 40px; border: 4px solid #e2e8f0; border-top: 4px solid var(--primary); border-radius: 50%; animation: spin 1s linear infinite; margin-bottom: 1rem; }
+        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+
+        /* Editors */
+        .editor-container { flex: 1; background: #e2e8f0; border-radius: 16px; overflow: hidden; position: relative; margin-bottom: 1rem; min-height: 250px; }
+        .editor-container img { max-width: 100%; max-height: 100%; display: block; }
+
+        /* Grid */
+        .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(120px, 1fr)); gap: 1rem; }
+        .page-card { background: var(--card); padding: 0.5rem; border-radius: 12px; border: 1px solid #e2e8f0; display: flex; flex-direction: column; gap: 0.5rem; }
+        .page-img-wrap { aspect-ratio: 1/1.414; background: #f1f5f9; position: relative; border-radius: 8px; overflow: hidden; }
+        .page-img-wrap img { width: 100%; height: 100%; object-fit: contain; }
+        
+        /* Badges & Overlays */
+        .toast { position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%); background: #334155; color: white; padding: 10px 20px; border-radius: 30px; z-index: 2000; font-size: 0.9rem; }
+        .badge { font-size: 0.65rem; padding: 2px 6px; border-radius: 4px; background: rgba(0,0,0,0.6); color: white; position: absolute; bottom: 4px; right: 4px; }
     </style>
 </head>
 <body>
 
     <header>
-        <div class="header-title">📄 SHM Scanner <span>β</span></div>
-        <button class="header-install-btn" onclick="openInstallPrompt()">📲 Install</button>
+        <div style="font-weight: 800; font-size: 1.1rem;">📄 SHM Scanner</div>
+        <button class="btn" style="padding: 0.4rem 1rem; font-size: 0.8rem;" onclick="location.reload()">Reset</button>
     </header>
 
-   <!-- STEP 1: CAPTURE -->
-<div id="step-1" class="step active">
-    <div class="capture-container">
+    <div id="loader-overlay"><div class="spinner"></div><div id="loader-text">Processing...</div></div>
 
-        <h3>Take High Quality Document Photos</h3>
-
-        <p style="color: var(--text-dim); max-width:300px;">
-            Use your camera to scan documents or choose an existing photo from your gallery.
-        </p>
-
-        <!-- Simple Link -->
-        <p>
-            <a href="compress.html"
-               style="text-decoration:none; color:#0066cc; font-weight:bold; font-size:16px;">
-                Split &amp; Compress PDF (Within 180 KB)
-            </a>
-        </p>
-
-        <div class="btn-group">
-
-            <label class="btn-label">
-                📸 Open Camera
-                <input type="file"
-                       id="system-camera-input"
-                       accept="image/*"
-                       capture="environment"
-                       style="display:none;">
-            </label>
-
-            <label class="btn-label secondary">
-                🖼️ Import from Gallery
-                <input type="file"
-                       id="file-input"
-                       accept="image/*"
-                       style="display:none;">
-            </label>
-
+    <!-- Step 1: Capture -->
+    <div id="step-1" class="step active">
+        <div style="flex:1; display:flex; flex-direction:column; align-items:center; justify-content:center; gap: 1rem;">
+            <h2>Capture Documents</h2>
+            <div class="btn-group">
+                <label class="btn">📸 Camera<input type="file" accept="image/*" capture="environment" style="display:none;" onchange="handleFile(event)"></label>
+                <label class="btn btn-outline">🖼️ Import<input type="file" accept="image/*" style="display:none;" onchange="handleFile(event)"></label>
+            </div>
+            <a href="compress.html" style="color: var(--primary); font-size: 0.9rem; margin-top: 1rem;">Go to PDF Splitter &rarr;</a>
         </div>
-
     </div>
-</div>
 
-    <!-- STEP 2: CROPPER -->
+    <!-- Step 2: Edit/Crop -->
     <div id="step-2" class="step">
-        <div class="editor-container" id="editor-container">
-            <img id="editor-image" src="" alt="Crop" style="display:none;" />
-            <div class="loading-placeholder" id="loading-placeholder">⏳ Loading image...</div>
+        <div class="editor-container"><img id="editor-image" /></div>
+        <div class="btn-group">
+            <button class="btn btn-outline" onclick="goToStep(1)">Cancel</button>
+            <button class="btn" onclick="savePage(false)">+ Save & Next</button>
+            <button class="btn" style="background:var(--primary)" onclick="savePage(true)">✔ Finish</button>
         </div>
-        <div class="filter-bar">
-            <button class="active-filter" id="f-original" onclick="setFilter('original')">Original</button>
-            <button id="f-enhance" onclick="setFilter('enhance')">✨ Enhance</button>
-            <button id="f-bw" onclick="setFilter('bw')">⚫ B&W</button>
-            <button id="f-magic" onclick="setFilter('magic')">🌈 Magic</button>
-        </div>
-        <div class="editor-actions">
-            <button class="btn btn-secondary btn-sm" onclick="goToStep(1)">✖ Cancel</button>
-            <button class="btn btn-sm" id="save-page-btn">➕ Save & Add</button>
-            <button class="btn btn-success btn-sm" id="finish-crop-btn">✔ Save & Preview</button>
-        </div>
-        <div style="text-align:center;margin-top:0.3rem;font-size:0.7rem;color:#94a3b8;">Drag corners to adjust crop</div>
     </div>
 
-    <!-- STEP 3: PREVIEW & EXPORT -->
+    <!-- Step 3: Preview -->
     <div id="step-3" class="step">
-        <div class="size-mode-container">
-            <div class="size-mode-title">
-                <span>📏 Output Size</span>
-                <span class="size-badge">≤ 99 KB</span>
-            </div>
-            <div class="mode-toggle">
-                <button id="mode-99kb" class="active-mode" onclick="setSizeMode('compressed')">⚡ 99KB Mode</button>
-                <button id="mode-original" onclick="setSizeMode('original')">💎 HD Quality</button>
-            </div>
-            <span class="size-mode-sub" id="size-mode-sub-text">Each exported JPG &amp; PDF capped at <strong>99 KB</strong>.</span>
-        </div>
-        <div id="size-warning-area"></div>
-        <div id="pages-grid" class="grid"></div>
-        <div class="btn-group" style="margin-top:0.8rem;">
-            <button class="btn btn-secondary btn-sm" onclick="goToStep(1)">➕ Add Page</button>
-            <button class="btn btn-sm" onclick="exportPDF()">📄 PDF</button>
-            <button class="btn btn-sm" onclick="exportJPG()">🖼️ JPG</button>
-            <button class="btn btn-share btn-sm" onclick="sharePDF()">📤 Share PDF</button>
-            <button class="btn btn-share btn-sm" onclick="shareJPG()">📤 Share JPG</button>
+        <div class="grid" id="pages-grid"></div>
+        <div class="btn-group">
+            <button class="btn btn-outline" onclick="goToStep(1)">+ Add Page</button>
+            <button class="btn" onclick="exportDoc('pdf')">Download PDF</button>
         </div>
     </div>
 
-    <!-- INSTALL MODAL -->
-    <div id="install-modal" class="install-modal-overlay">
-        <div class="install-modal-box">
-            <div class="icon">📲</div>
-            <h3>Install SHM Scanner</h3>
-            <p>Add to your home screen for quick offline access. All exports stay under 99 KB.</p>
-            <div class="install-modal-actions">
-                <button class="btn-close" onclick="closeInstallModal()">Close</button>
-                <button class="btn-install" onclick="triggerAppInstall()">🚀 Install</button>
-            </div>
-        </div>
-    </div>
+    <div id="toast" class="toast" style="display:none;"></div>
 
-    <!-- TOAST -->
-    <div id="status-toast"></div>
-
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.5.13/cropper.min.js">
-    </script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js">
-    </script>
-
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.5.13/cropper.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
     <script>
-        // ─── CONSTANTS ─────────────────────────────────────────────
-        const A4_ASPECT = 210 / 297;
-        const TARGET_BYTES = 99 * 1024;
-        const SHARE_TARGET_BYTES = 90 * 1024; // 90 KB for sharing
-
-        const COMPRESS_99KB = { maxDimStart: 1100, qualityFloor: 0.08, dimStep: 80, minDim: 300 };
-        const COMPRESS_SHARE = { maxDimStart: 800, qualityFloor: 0.06, dimStep: 70, minDim: 250 };
-
-        // ─── STATE ─────────────────────────────────────────────────
-        let scannedPagesOriginal = [];
-        let scannedPagesCompressed = [];
+        let pages = []; // Array of {original: dataUrl, compressed: dataUrl}
         let cropper = null;
-        let currentFilter = 'original';
-        let selectedSizeMode = 'compressed';
-        let deferredPrompt = null;
-        let isProcessing = false;
-        let isCropperReady = false;
-
-        // ─── DOM refs ──────────────────────────────────────────────
         const editorImg = document.getElementById('editor-image');
-        const pagesGrid = document.getElementById('pages-grid');
-        const installModal = document.getElementById('install-modal');
-        const toastEl = document.getElementById('status-toast');
-        const pageCountDisplay = document.getElementById('page-count-display');
-        const sizeWarningArea = document.getElementById('size-warning-area');
-        const loadingPlaceholder = document.getElementById('loading-placeholder');
+        const loader = document.getElementById('loader-overlay');
 
-        // ─── PWA Install ──────────────────────────────────────────
-        window.addEventListener('beforeinstallprompt', (e) => {
-            e.preventDefault();
-            deferredPrompt = e;
-            if (!sessionStorage.getItem('installPromptDismissed')) {
-                setTimeout(() => { installModal.style.display = 'flex'; }, 1500);
-            }
-        });
-
-        function openInstallPrompt() { installModal.style.display = 'flex'; }
-
-        function closeInstallModal() {
-            installModal.style.display = 'none';
-            sessionStorage.setItem('installPromptDismissed', 'true');
+        function showLoader(text) { loader.style.display = 'flex'; document.getElementById('loader-text').innerText = text; }
+        function hideLoader() { loader.style.display = 'none'; }
+        function showToast(msg) {
+            const t = document.getElementById('toast');
+            t.innerText = msg; t.style.display = 'block';
+            setTimeout(() => t.style.display = 'none', 2000);
         }
 
-        async function triggerAppInstall() {
-            if (deferredPrompt) {
-                deferredPrompt.prompt();
-                const { outcome } = await deferredPrompt.userChoice;
-                showToast(outcome === 'accepted' ? '✅ Installing…' : '❌ Dismissed');
-                deferredPrompt = null;
-                closeInstallModal();
-            } else {
-                alert('ℹ️ Tap browser menu (⋮) → "Install App" or "Add to Home Screen".');
-                closeInstallModal();
-            }
+        function goToStep(s) {
+            document.querySelectorAll('.step').forEach(el => el.classList.remove('active'));
+            document.getElementById('step-'+s).classList.add('active');
+            if(s === 3) renderGrid();
         }
 
-        // ─── Toast ─────────────────────────────────────────────────
-        let toastTimer = null;
-
-        function showToast(msg, duration = 3500) {
-            toastEl.innerText = msg;
-            toastEl.style.display = 'block';
-            clearTimeout(toastTimer);
-            toastTimer = setTimeout(() => { toastEl.style.display = 'none'; }, duration);
-        }
-
-        // ─── Navigation ────────────────────────────────────────────
-        function goToStep(step) {
-            document.querySelectorAll('.step').forEach(s => s.classList.remove('active'));
-            document.getElementById(`step-${step}`).classList.add('active');
-            if (step === 3) renderPages();
-            updatePageCount();
-        }
-
-        function updatePageCount() { pageCountDisplay.textContent = scannedPagesOriginal.length; }
-
-        // ─── Size Mode ─────────────────────────────────────────────
-        function setSizeMode(mode) {
-            selectedSizeMode = mode;
-            document.getElementById('mode-99kb').classList.toggle('active-mode', mode === 'compressed');
-            document.getElementById('mode-original').classList.toggle('active-mode', mode === 'original');
-            const sub = document.getElementById('size-mode-sub-text');
-            if (mode === 'compressed') {
-                sub.innerHTML = 'Each exported JPG &amp; PDF capped at <strong>99 KB</strong> (aggressive compression).';
-            } else {
-                sub.innerHTML = '💎 <strong>Full resolution</strong> with maximum quality — files may be large.';
-            }
-            renderPages();
-        }
-
-        // ─── File Input ────────────────────────────────────────────
-        document.getElementById('system-camera-input').addEventListener('change', handleFileSelect);
-        document.getElementById('file-input').addEventListener('change', handleFileSelect);
-
-        function handleFileSelect(e) {
-            const files = e.target.files;
-            if (!files || !files.length) return;
-            const file = files[0];
-            e.target.value = '';
-            if (isProcessing) return;
-            isProcessing = true;
-            showToast('📸 Loading image…', 2000);
-
-            loadingPlaceholder.style.display = 'flex';
-            editorImg.style.display = 'none';
-            if (cropper) { cropper.destroy();
-                cropper = null;
-                isCropperReady = false; }
-
+        async function handleFile(e) {
+            const file = e.target.files[0];
+            if(!file) return;
             const reader = new FileReader();
-            reader.onload = (evt) => {
-                const img = new Image();
-                img.onload = () => {
-                    const canvas = document.createElement('canvas');
-                    const ctx = canvas.getContext('2d');
-                    let w = img.width,
-                        h = img.height;
-                    const MAX_EDITOR = 2800;
-                    if (w > MAX_EDITOR) { h = Math.round((h * MAX_EDITOR) / w);
-                        w = MAX_EDITOR; }
-                    canvas.width = w;
-                    canvas.height = h;
-                    ctx.imageSmoothingEnabled = true;
-                    ctx.imageSmoothingQuality = 'high';
-                    ctx.drawImage(img, 0, 0, w, h);
-                    const rect = autoDetectDocument(canvas);
-                    const dataUrl = canvas.toDataURL('image/jpeg', 0.95);
-                    preloadAndInitCropper(dataUrl, rect);
-                    isProcessing = false;
-                };
-                img.onerror = () => { isProcessing = false;
-                    showToast('❌ Failed to decode image.', 3000);
-                    loadingPlaceholder.style.display = 'none'; };
-                img.src = evt.target.result;
+            reader.onload = (ev) => {
+                editorImg.src = ev.target.result;
+                goToStep(2);
+                initCropper();
             };
-            reader.onerror = () => { isProcessing = false;
-                showToast('❌ File read error.', 3000);
-                loadingPlaceholder.style.display = 'none'; };
             reader.readAsDataURL(file);
         }
 
-        // ─── Auto‑Detect ──────────────────────────────────────────
-        function autoDetectDocument(canvas) {
-            const ctx = canvas.getContext('2d');
-            const w = canvas.width,
-                h = canvas.height;
-            const imageData = ctx.getImageData(0, 0, w, h);
-            const data = imageData.data;
-            const threshold = 200;
-            let minX = w,
-                maxX = 0,
-                minY = h,
-                maxY = 0,
-                found = false;
-            for (let y = 0; y < h; y++) {
-                for (let x = 0; x < w; x++) {
-                    const idx = (y * w + x) * 4;
-                    const gray = 0.299 * data[idx] + 0.587 * data[idx + 1] + 0.114 * data[idx + 2];
-                    if (gray < threshold) {
-                        found = true;
-                        if (x < minX) minX = x;
-                        if (x > maxX) maxX = x;
-                        if (y < minY) minY = y;
-                        if (y > maxY) maxY = y;
-                    }
-                }
-            }
-            if (!found) return { x: 0, y: 0, width: w, height: h };
-            const padX = Math.round((maxX - minX) * 0.05);
-            const padY = Math.round((maxY - minY) * 0.05);
-            minX = Math.max(0, minX - padX);
-            maxX = Math.min(w, maxX + padX);
-            minY = Math.max(0, minY - padY);
-            maxY = Math.min(h, maxY + padY);
-            const rect = { x: minX, y: minY, width: maxX - minX, height: maxY - minY };
-            if (rect.width < 50 || rect.height < 50) return { x: 0, y: 0, width: w, height: h };
-            return rect;
-        }
-
-        // ─── Preload & init cropper ──────────────────────────────
-        function preloadAndInitCropper(src, rect) {
-            loadingPlaceholder.style.display = 'none';
-            const tempImg = new Image();
-            tempImg.onload = function() {
-                editorImg.src = src;
-                editorImg.style.display = 'block';
-                if (cropper) { cropper.destroy();
-                    cropper = null;
-                    isCropperReady = false; }
-                setTimeout(() => { initCropper(rect); }, 50);
-            };
-            tempImg.onerror = function() {
-                showToast('❌ Failed to load image for cropping.', 3000);
-                loadingPlaceholder.style.display = 'flex';
-                editorImg.style.display = 'none';
-            };
-            tempImg.src = src;
-            goToStep(2);
-        }
-
-        function initCropper(rect) {
-            setFilter('original');
-            const defaultRect = rect || { x: 0, y: 0, width: 1, height: 1 };
-            if (!editorImg.complete || editorImg.naturalWidth === 0) {
-                editorImg.onload = function() { initCropper(rect); };
-                return;
-            }
-            try {
-                cropper = new Cropper(editorImg, {
-                    aspectRatio: A4_ASPECT,
-                    viewMode: 1,
-                    autoCropArea: 0.98,
-                    responsive: true,
-                    background: true,
-                    guides: true,
-                    center: true,
-                    cropBoxMovable: true,
-                    cropBoxResizable: true,
-                    minCropBoxWidth: 50,
-                    minCropBoxHeight: 50,
-                    imageSmoothingQuality: 'high',
-                    ready: function() {
-                        isCropperReady = true;
-                        const imgW = this.imageData.naturalWidth || this.imageData.width;
-                        const imgH = this.imageData.naturalHeight || this.imageData.height;
-                        if (defaultRect.width > 0 && defaultRect.height > 0) {
-                            const xRatio = defaultRect.x / imgW;
-                            const yRatio = defaultRect.y / imgH;
-                            const wRatio = defaultRect.width / imgW;
-                            const hRatio = defaultRect.height / imgH;
-                            const cx = Math.max(0, xRatio);
-                            const cy = Math.max(0, yRatio);
-                            const cw = Math.min(1 - cx, wRatio);
-                            const ch = Math.min(1 - cy, hRatio);
-                            if (cw > 0.05 && ch > 0.05) {
-                                this.setCropBoxData({ left: cx * 100, top: cy * 100, width: cw * 100, height: ch * 100 });
-                            }
-                        }
-                        editorImg.style.display = 'block';
-                        loadingPlaceholder.style.display = 'none';
-                        showToast('✂️ Drag corners to crop', 2000);
-                    }
-                });
-            } catch (e) {
-                console.error('Cropper init error:', e);
-                showToast('❌ Failed to initialize cropper. Please try again.', 3000);
-                loadingPlaceholder.style.display = 'flex';
-                editorImg.style.display = 'none';
-            }
-        }
-
-        // ─── Filters ───────────────────────────────────────────────
-        function setFilter(type) {
-            currentFilter = type;
-            document.querySelectorAll('.filter-bar button').forEach(b => b.classList.remove('active-filter'));
-            const btn = document.getElementById(`f-${type}`);
-            if (btn) btn.classList.add('active-filter');
-        }
-
-        function applyFilterToCanvas(canvas) {
-            if (currentFilter === 'original') return canvas;
-            const ctx = canvas.getContext('2d');
-            const imgData = ctx.getImageData(0, 0, canvas.width, canvas.height);
-            const d = imgData.data;
-            for (let i = 0; i < d.length; i += 4) {
-                let r = d[i],
-                    g = d[i + 1],
-                    b = d[i + 2];
-                if (currentFilter === 'bw') {
-                    let gray = 0.299 * r + 0.587 * g + 0.114 * b;
-                    let v = gray > 125 ? 255 : (gray * 0.75);
-                    d[i] = d[i + 1] = d[i + 2] = v;
-                } else if (currentFilter === 'enhance') {
-                    d[i] = Math.min(255, (r - 128) * 1.35 + 128);
-                    d[i + 1] = Math.min(255, (g - 128) * 1.35 + 128);
-                    d[i + 2] = Math.min(255, (b - 128) * 1.35 + 128);
-                } else if (currentFilter === 'magic') {
-                    d[i] = Math.min(255, (r - 128) * 1.5 + 128);
-                    d[i + 1] = Math.min(255, (g - 128) * 1.5 + 128);
-                    d[i + 2] = Math.min(255, (b - 128) * 1.5 + 128);
-                }
-            }
-            ctx.putImageData(imgData, 0, 0);
-            return canvas;
-        }
-
-        // ─── Byte utils ────────────────────────────────────────────
-        function getByteSize(base64) {
-            const raw = base64.split(',')[1] || base64;
-            const pad = raw.endsWith('==') ? 2 : (raw.endsWith('=') ? 1 : 0);
-            return Math.round((raw.length * 3) / 4) - pad;
-        }
-
-        function formatBytes(bytes) {
-            const kb = bytes / 1024;
-            if (kb >= 1000) return `${(kb / 1024).toFixed(1)} MB`;
-            return `${Math.round(kb)} KB`;
-        }
-
-        // ─── Compressor ────────────────────────────────────────────
-        function compressImageToSize(sourceCanvas, targetBytes, maxDimStart, qualityFloor, dimStep, minDim) {
-            let maxDim = maxDimStart || 1100;
-            let bestDataUrl = null;
-            let bestSize = Infinity;
-
-            while (true) {
-                let w = sourceCanvas.width,
-                    h = sourceCanvas.height;
-                if (w > maxDim || h > maxDim) {
-                    if (w > h) { h = Math.round((h * maxDim) / w);
-                        w = maxDim; } else { w = Math.round((w * maxDim) / h);
-                        h = maxDim; }
-                }
-                const tmp = document.createElement('canvas');
-                tmp.width = w;
-                tmp.height = h;
-                const ctx = tmp.getContext('2d');
-                ctx.fillStyle = '#FFFFFF';
-                ctx.fillRect(0, 0, w, h);
-                ctx.imageSmoothingEnabled = true;
-                ctx.imageSmoothingQuality = 'high';
-                ctx.drawImage(sourceCanvas, 0, 0, w, h);
-                applyFilterToCanvas(tmp);
-
-                let quality = 0.88;
-                let dataUrl = tmp.toDataURL('image/jpeg', quality);
-                let size = getByteSize(dataUrl);
-
-                const floor = qualityFloor || 0.08;
-                const step = dimStep || 80;
-                const minD = minDim || 300;
-
-                while (size > targetBytes && quality > floor) {
-                    quality -= 0.04;
-                    dataUrl = tmp.toDataURL('image/jpeg', quality);
-                    size = getByteSize(dataUrl);
-                }
-
-                if (size < bestSize) {
-                    bestSize = size;
-                    bestDataUrl = dataUrl;
-                }
-                if (size <= targetBytes) return dataUrl;
-                if (maxDim <= minD) return bestDataUrl;
-                maxDim -= step;
-            }
-        }
-
-        function compressTo99KB(sourceCanvas) {
-            return compressImageToSize(sourceCanvas, TARGET_BYTES, COMPRESS_99KB.maxDimStart, COMPRESS_99KB.qualityFloor,
-                COMPRESS_99KB.dimStep, COMPRESS_99KB.minDim);
-        }
-
-        function compressToShare(sourceCanvas) {
-            return compressImageToSize(sourceCanvas, SHARE_TARGET_BYTES, COMPRESS_SHARE.maxDimStart, COMPRESS_SHARE
-                .qualityFloor, COMPRESS_SHARE.dimStep, COMPRESS_SHARE.minDim);
-        }
-
-        function getOriginalQualityDataUrl(sourceCanvas) {
-            const tmp = document.createElement('canvas');
-            tmp.width = sourceCanvas.width;
-            tmp.height = sourceCanvas.height;
-            const ctx = tmp.getContext('2d');
-            ctx.fillStyle = '#FFFFFF';
-            ctx.fillRect(0, 0, tmp.width, tmp.height);
-            ctx.drawImage(sourceCanvas, 0, 0);
-            applyFilterToCanvas(tmp);
-            return tmp.toDataURL('image/jpeg', 1.0);
-        }
-
-        // ─── Save current page ────────────────────────────────────
-        function saveCurrentPage() {
-            if (!cropper || !isCropperReady) {
-                showToast('⚠️ Please wait for the image to load completely.', 2500);
-                return;
-            }
-            try {
-                const cropped = cropper.getCroppedCanvas({ imageSmoothingQuality: 'high' });
-                if (!cropped || cropped.width === 0 || cropped.height === 0) {
-                    showToast('⚠️ Crop area is empty. Please adjust the crop box.', 2500);
-                    return;
-                }
-                const orig = getOriginalQualityDataUrl(cropped);
-                const comp = compressTo99KB(cropped);
-                scannedPagesOriginal.push(orig);
-                scannedPagesCompressed.push(comp);
-                updatePageCount();
-                const size = getByteSize(selectedSizeMode === 'compressed' ? comp : orig);
-                showToast(`✅ Page ${scannedPagesOriginal.length} saved (${formatBytes(size)})`, 2000);
-            } catch (e) {
-                console.error('Save error:', e);
-                showToast('❌ Failed to save page. Please try again.', 3000);
-            }
-        }
-
-        document.getElementById('save-page-btn').addEventListener('click', () => {
-            saveCurrentPage();
-            goToStep(1);
-        });
-        document.getElementById('finish-crop-btn').addEventListener('click', () => {
-            saveCurrentPage();
-            goToStep(3);
-        });
-
-        // ─── Get active pages ──────────────────────────────────────
-        function getActivePages() {
-            return selectedSizeMode === 'compressed' ? scannedPagesCompressed : scannedPagesOriginal;
-        }
-
-        // ─── Render grid ───────────────────────────────────────────
-        function renderPages() {
-            const pages = getActivePages();
-            pagesGrid.innerHTML = '';
-            if (!pages.length) {
-                pagesGrid.innerHTML =
-                    `<div style="grid-column:1/-1;text-align:center;color:#64748b;padding:1.5rem 0;font-size:0.9rem;">No pages yet. Scan a document to get started.</div>`;
-                sizeWarningArea.innerHTML = '';
-                return;
-            }
-
-            let totalSize = 0;
-            let anyOverTarget = false;
-
-            pages.forEach((src, idx) => {
-                const bytes = getByteSize(src);
-                totalSize += bytes;
-                const over = bytes > TARGET_BYTES;
-                if (over) anyOverTarget = true;
-
-                const card = document.createElement('div');
-                card.className = 'page-card';
-                const modeLabel = selectedSizeMode === 'compressed' ? '⚡99KB' : '💎HD';
-                const sizeBadgeClass = selectedSizeMode === 'compressed' ? (over ? 'over' : 'ok') : 'hd';
-                card.innerHTML = `
-              <div class="page-card-image-wrap">
-                <img src="${src}" alt="Page ${idx+1}" loading="lazy" />
-                <span class="page-badge">${modeLabel}</span>
-                <span class="page-size-badge ${sizeBadgeClass}">${formatBytes(bytes)}</span>
-                <button class="delete-btn" onclick="deletePage(${idx})">✕</button>
-              </div>
-              <button class="rotate-card-btn" onclick="rotatePreviewPage(${idx})">🔄 Rotate</button>
-            `;
-                pagesGrid.appendChild(card);
+        function initCropper() {
+            if(cropper) cropper.destroy();
+            cropper = new Cropper(editorImg, {
+                aspectRatio: NaN, viewMode: 1, autoCropArea: 0.9,
             });
-
-            let warnHtml = '';
-            if (selectedSizeMode === 'compressed') {
-                if (anyOverTarget) {
-                    warnHtml =
-                        `<div class="size-warning">⚠️ <strong>Some pages exceed 99 KB.</strong> They will be re‑compressed on export/share.</div>`;
-                } else if (pages.length > 1) {
-                    warnHtml =
-                        `<div class="size-warning success">✅ All pages ≤ 99 KB · Total: ${formatBytes(totalSize)} (${pages.length} pages)</div>`;
-                } else {
-                    warnHtml = `<div class="size-warning success">✅ Page size: ${formatBytes(totalSize)} ≤ 99 KB</div>`;
-                }
-            } else {
-                warnHtml =
-                    `<div class="size-warning info">💎 HD Mode · Total: ${formatBytes(totalSize)} · Full resolution, maximum quality.</div>`;
-            }
-            sizeWarningArea.innerHTML = warnHtml;
-            updatePageCount();
         }
 
-        // ─── Rotate ─────────────────────────────────────────────────
-        function rotatePreviewPage(idx) {
-            const img = new Image();
-            img.src = scannedPagesOriginal[idx];
-            img.onload = () => {
-                const canvas = document.createElement('canvas');
-                canvas.width = img.height;
-                canvas.height = img.width;
-                const ctx = canvas.getContext('2d');
-                ctx.fillStyle = '#FFFFFF';
-                ctx.fillRect(0, 0, canvas.width, canvas.height);
-                ctx.imageSmoothingEnabled = true;
-                ctx.imageSmoothingQuality = 'high';
-                ctx.translate(canvas.width / 2, canvas.height / 2);
-                ctx.rotate((90 * Math.PI) / 180);
-                ctx.drawImage(img, -img.width / 2, -img.height / 2);
-                const newOrig = canvas.toDataURL('image/jpeg', 1.0);
-                scannedPagesOriginal[idx] = newOrig;
-                scannedPagesCompressed[idx] = compressTo99KB(canvas);
-                renderPages();
-                showToast('🔄 Rotated 90°', 1500);
-            };
-        }
-
-        // ─── Delete ─────────────────────────────────────────────────
-        function deletePage(idx) {
-            scannedPagesOriginal.splice(idx, 1);
-            scannedPagesCompressed.splice(idx, 1);
-            renderPages();
-            showToast(`🗑️ Page ${idx+1} removed`, 1500);
-        }
-
-        // ─── Helper: load dataUrl to canvas ──────────────────────
-        function loadImageToCanvas(dataUrl) {
-            return new Promise((resolve, reject) => {
+        async function compressImage(dataUrl, quality = 0.6) {
+            return new Promise(resolve => {
                 const img = new Image();
                 img.onload = () => {
                     const canvas = document.createElement('canvas');
-                    canvas.width = img.width;
-                    canvas.height = img.height;
+                    // Resize large images to save memory
+                    const max = 1500;
+                    let w = img.width, h = img.height;
+                    if(w > max) { h *= (max/w); w = max; }
+                    canvas.width = w; canvas.height = h;
                     const ctx = canvas.getContext('2d');
-                    ctx.drawImage(img, 0, 0);
-                    resolve(canvas);
+                    ctx.drawImage(img, 0, 0, w, h);
+                    resolve(canvas.toDataURL('image/jpeg', quality));
                 };
-                img.onerror = reject;
                 img.src = dataUrl;
             });
         }
 
-        // ─── Generate PDF ──────────────────────────────────────────
-        async function generatePDFBlob(targetBytes, useCompressed = true) {
-            if (!scannedPagesOriginal.length) return null;
-            const { jsPDF } = window.jspdf;
-
-            let imageDataUrls;
-            if (useCompressed) {
-                imageDataUrls = scannedPagesCompressed.slice();
-            } else {
-                imageDataUrls = scannedPagesOriginal.slice();
-            }
-
-            const pageCount = imageDataUrls.length;
-            if (useCompressed) {
-                const ensured = [];
-                for (let i = 0; i < pageCount; i++) {
-                    const img = imageDataUrls[i];
-                    const bytes = getByteSize(img);
-                    if (bytes <= targetBytes) {
-                        ensured.push(img);
-                    } else {
-                        try {
-                            const origCanvas = await loadImageToCanvas(scannedPagesOriginal[i]);
-                            const newComp = compressImageToSize(origCanvas, targetBytes, COMPRESS_99KB.maxDimStart,
-                                COMPRESS_99KB.qualityFloor, COMPRESS_99KB.dimStep, COMPRESS_99KB.minDim);
-                            ensured.push(newComp);
-                            scannedPagesCompressed[i] = newComp;
-                        } catch (e) {
-                            ensured.push(img);
-                        }
-                    }
-                }
-                imageDataUrls = ensured;
-            }
-
-            function buildPDF(images) {
-                const pdf = new jsPDF({ orientation: 'portrait', unit: 'mm', format: 'a4', compress: true });
-                images.forEach((data, i) => {
-                    if (i > 0) pdf.addPage('a4', 'portrait');
-                    pdf.addImage(data, 'JPEG', 0, 0, 210, 297, undefined, 'SLOW');
-                });
-                return pdf.output('blob');
-            }
-
-            let pdfBlob = buildPDF(imageDataUrls);
-            let size = pdfBlob.size;
-
-            if (!useCompressed || size <= targetBytes) {
-                return pdfBlob;
-            }
-
-            let perPageTarget = Math.floor((targetBytes - 2048) / pageCount);
-            let attempts = 0;
-            const MAX_ATTEMPTS = 8;
-
-            while (attempts < MAX_ATTEMPTS && size > targetBytes) {
-                perPageTarget = Math.floor(perPageTarget * 0.85);
-                if (perPageTarget < 3000) perPageTarget = 3000;
-
-                const newImages = [];
-                let allGood = true;
-                for (let i = 0; i < pageCount; i++) {
-                    try {
-                        const origCanvas = await loadImageToCanvas(scannedPagesOriginal[i]);
-                        const compressed = compressImageToSize(origCanvas, perPageTarget, COMPRESS_99KB.maxDimStart,
-                            COMPRESS_99KB.qualityFloor, COMPRESS_99KB.dimStep, COMPRESS_99KB.minDim);
-                        newImages.push(compressed);
-                        if (getByteSize(compressed) > perPageTarget) allGood = false;
-                    } catch (e) {
-                        allGood = false;
-                        newImages.push(imageDataUrls[i]);
-                    }
-                }
-                if (!allGood) {
-                    attempts++;
-                    continue;
-                }
-                pdfBlob = buildPDF(newImages);
-                size = pdfBlob.size;
-                for (let i = 0; i < newImages.length; i++) {
-                    scannedPagesCompressed[i] = newImages[i];
-                }
-                attempts++;
-            }
-
-            return pdfBlob;
+        async function savePage(finish) {
+            showLoader("Processing page...");
+            const canvas = cropper.getCroppedCanvas();
+            const original = canvas.toDataURL('image/jpeg', 0.9);
+            const compressed = await compressImage(original, 0.5);
+            
+            pages.push({ original, compressed });
+            showToast("Page Saved");
+            hideLoader();
+            finish ? goToStep(3) : goToStep(1);
         }
 
-        // ─── Exports (Download) ────────────────────────────────────
-        async function exportPDF() {
-            if (!scannedPagesOriginal.length) { showToast('❌ No pages to export.', 2500); return; }
-            showToast('⏳ Generating PDF…', 3000);
-            try {
-                const useCompressed = (selectedSizeMode === 'compressed');
-                const target = useCompressed ? TARGET_BYTES : Infinity;
-                const blob = await generatePDFBlob(target, useCompressed);
-                if (!blob) throw new Error('PDF generation failed');
-                const size = blob.size;
-                if (useCompressed && size > TARGET_BYTES) {
-                    showToast(`⚠️ PDF is ${formatBytes(size)} — exceeds 99 KB. Try reducing pages.`, 4000);
-                } else {
-                    showToast(`✅ PDF ready: ${formatBytes(size)}`, 2000);
-                }
-                const link = document.createElement('a');
-                link.href = URL.createObjectURL(blob);
-                link.download = `Scan_${selectedSizeMode}_${new Date().toISOString().slice(0,10)}.pdf`;
-                document.body.appendChild(link);
-                link.click();
-                document.body.removeChild(link);
-                setTimeout(() => URL.revokeObjectURL(link.href), 10000);
-                renderPages();
-            } catch (e) {
-                console.error('PDF export error:', e);
-                showToast('❌ Failed to generate PDF: ' + e.message, 4000);
-            }
-        }
-
-        async function exportJPG() {
-            const pages = getActivePages();
-            if (!pages.length) { showToast('❌ No pages to export.', 2500); return; }
-            let exportPages = pages;
-            if (selectedSizeMode === 'compressed') {
-                const ensured = [];
-                for (let i = 0; i < pages.length; i++) {
-                    const img = pages[i];
-                    const bytes = getByteSize(img);
-                    if (bytes <= TARGET_BYTES) {
-                        ensured.push(img);
-                    } else {
-                        try {
-                            const origCanvas = await loadImageToCanvas(scannedPagesOriginal[i]);
-                            const newComp = compressTo99KB(origCanvas);
-                            ensured.push(newComp);
-                            scannedPagesCompressed[i] = newComp;
-                        } catch (e) {
-                            ensured.push(img);
-                        }
-                    }
-                }
-                exportPages = ensured;
-            }
-            exportPages.forEach((src, idx) => {
-                const link = document.createElement('a');
-                link.href = src;
-                const label = selectedSizeMode === 'compressed' ? '99KB' : 'HD';
-                link.download = `Scan_${label}_Page${idx+1}.jpg`;
-                document.body.appendChild(link);
-                link.click();
-                document.body.removeChild(link);
+        function renderGrid() {
+            const grid = document.getElementById('pages-grid');
+            grid.innerHTML = '';
+            pages.forEach((p, i) => {
+                const div = document.createElement('div');
+                div.className = 'page-card';
+                div.innerHTML = `
+                    <div class="page-img-wrap"><img src="${p.compressed}">
+                    <span class="badge">Pg ${i+1}</span></div>
+                    <button class="btn btn-outline" style="padding:0.2rem; font-size:0.7rem;" onclick="removePage(${i})">Remove</button>
+                `;
+                grid.appendChild(div);
             });
-            showToast(`✅ ${exportPages.length} JPGs exported.`, 2000);
-            renderPages();
         }
 
-        // ─── SHARE: respects the selected mode ────────────────────
-        // If HD mode → share original quality (no compression)
-        // If 99KB mode → compress to 90KB for sharing
+        function removePage(i) { pages.splice(i, 1); renderGrid(); }
 
-        async function sharePDF() {
-            if (!scannedPagesOriginal.length) { showToast('❌ No pages to share.', 2500); return; }
-
-            const useHd = (selectedSizeMode === 'original');
-            const label = useHd ? 'HD' : '99KB';
-            showToast(`⏳ Preparing ${label} PDF for sharing…`, 3000);
-
-            try {
-                let blob;
-                if (useHd) {
-                    // HD mode: use original quality, no compression
-                    blob = await generatePDFBlob(Infinity, false);
-                } else {
-                    // 99KB mode: compress to 90KB
-                    blob = await generatePDFBlob(SHARE_TARGET_BYTES, true);
-                }
-                if (!blob) throw new Error('PDF generation failed');
-
-                const size = blob.size;
-                if (!useHd && size > SHARE_TARGET_BYTES) {
-                    showToast(`⚠️ PDF is ${formatBytes(size)} — exceeds 90 KB.`, 4000);
-                } else {
-                    showToast(`✅ ${label} PDF ready: ${formatBytes(size)}`, 2000);
-                }
-
-                const file = new File([blob], `Scan_${label}_${Date.now()}.pdf`, { type: 'application/pdf' });
-
-                if (navigator.canShare && navigator.canShare({ files: [file] })) {
-                    await navigator.share({ files: [file], title: `Scanned Document (${label})` });
-                    showToast(`📤 ${label} PDF shared!`, 2000);
-                } else {
-                    const link = document.createElement('a');
-                    link.href = URL.createObjectURL(blob);
-                    link.download = `Scan_${label}_${Date.now()}.pdf`;
-                    document.body.appendChild(link);
-                    link.click();
-                    document.body.removeChild(link);
-                    setTimeout(() => URL.revokeObjectURL(link.href), 10000);
-                    showToast(`📥 ${label} PDF downloaded (share not supported).`, 2500);
-                }
-                renderPages();
-            } catch (e) {
-                if (e.name === 'AbortError') { showToast('Share cancelled.', 1500); } else {
-                    console.error('Share PDF error:', e);
-                    showToast('❌ Failed to share PDF: ' + e.message, 4000);
-                    try {
-                        const useHdFallback = (selectedSizeMode === 'original');
-                        const blob = await generatePDFBlob(useHdFallback ? Infinity : SHARE_TARGET_BYTES, !useHdFallback);
-                        if (blob) {
-                            const link = document.createElement('a');
-                            link.href = URL.createObjectURL(blob);
-                            link.download = `Scan_${Date.now()}.pdf`;
-                            document.body.appendChild(link);
-                            link.click();
-                            document.body.removeChild(link);
-                            showToast('📥 PDF downloaded as fallback.', 2500);
-                        }
-                    } catch (fb) { console.error('Fallback download failed:', fb); }
-                }
+        async function exportDoc(type) {
+            if(pages.length === 0) return;
+            showLoader("Generating PDF...");
+            const { jsPDF } = window.jspdf;
+            const pdf = new jsPDF('p', 'mm', 'a4');
+            
+            for(let i=0; i<pages.length; i++) {
+                if(i > 0) pdf.addPage();
+                pdf.addImage(pages[i].compressed, 'JPEG', 0, 0, 210, 297);
             }
+            pdf.save("document.pdf");
+            hideLoader();
         }
-
-        async function shareJPG() {
-            const pages = getActivePages();
-            if (!pages.length) { showToast('❌ No pages to share.', 2500); return; }
-
-            const useHd = (selectedSizeMode === 'original');
-            const label = useHd ? 'HD' : '99KB';
-            showToast(`⏳ Preparing ${label} JPGs for sharing…`, 3000);
-
-            try {
-                let imageDataUrls;
-                if (useHd) {
-                    // HD mode: use original images directly
-                    imageDataUrls = scannedPagesOriginal.slice();
-                } else {
-                    // 99KB mode: compress to 90KB
-                    const ensured = [];
-                    for (let i = 0; i < pages.length; i++) {
-                        const img = pages[i];
-                        const bytes = getByteSize(img);
-                        if (bytes <= SHARE_TARGET_BYTES) {
-                            ensured.push(img);
-                        } else {
-                            try {
-                                const origCanvas = await loadImageToCanvas(scannedPagesOriginal[i]);
-                                const newComp = compressImageToSize(origCanvas, SHARE_TARGET_BYTES, COMPRESS_SHARE
-                                    .maxDimStart, COMPRESS_SHARE.qualityFloor, COMPRESS_SHARE.dimStep, COMPRESS_SHARE
-                                    .minDim);
-                                ensured.push(newComp);
-                            } catch (e) {
-                                ensured.push(img);
-                            }
-                        }
-                    }
-                    imageDataUrls = ensured;
-                }
-
-                const files = await Promise.all(imageDataUrls.map(async (dataUrl, idx) => {
-                    const response = await fetch(dataUrl);
-                    const blob = await response.blob();
-                    return new File([blob], `Scan_${label}_Pg${idx+1}.jpg`, { type: 'image/jpeg' });
-                }));
-
-                if (navigator.canShare && navigator.canShare({ files })) {
-                    await navigator.share({ files: files, title: `Scanned Pages (${label})` });
-                    showToast(`📤 ${label} JPGs shared!`, 2000);
-                } else {
-                    files.forEach((file) => {
-                        const link = document.createElement('a');
-                        link.href = URL.createObjectURL(file);
-                        link.download = file.name;
-                        document.body.appendChild(link);
-                        link.click();
-                        document.body.removeChild(link);
-                    });
-                    showToast(`📥 ${label} JPGs downloaded (share not supported).`, 2500);
-                }
-                renderPages();
-            } catch (e) {
-                if (e.name === 'AbortError') { showToast('Share cancelled.', 1500); } else {
-                    console.error('Share JPG error:', e);
-                    showToast('❌ Failed to share JPGs: ' + e.message, 4000);
-                    try {
-                        const fallbackPages = imageDataUrls || pages;
-                        fallbackPages.forEach((src, idx) => {
-                            const link = document.createElement('a');
-                            link.href = src;
-                            link.download = `Scan_Pg${idx+1}.jpg`;
-                            document.body.appendChild(link);
-                            link.click();
-                            document.body.removeChild(link);
-                        });
-                        showToast('📥 JPGs downloaded as fallback.', 2500);
-                    } catch (fb) { console.error('Fallback download failed:', fb); }
-                }
-            }
-        }
-
-        // ─── Keyboard shortcut ─────────────────────────────────────
-        document.addEventListener('keydown', (e) => {
-            if (e.key === 'Enter') {
-                const step2 = document.getElementById('step-2');
-                if (step2.classList.contains('active')) {
-                    document.getElementById('save-page-btn').click();
-                }
-            }
-        });
-
-        // ─── Init ──────────────────────────────────────────────────
-        updatePageCount();
-        renderPages();
-
-        if ('serviceWorker' in navigator) {
-            navigator.serviceWorker.register('sw.js')
-                .then(() => console.log('SW registered'))
-                .catch(() => console.log('SW skip'));
-        }
-        console.log('📄 SHM Scanner · HD vs 99KB clearly distinct, share uses 90KB with aggressive compression.');
     </script>
 </body>
 </html>
