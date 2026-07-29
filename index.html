@@ -13,17 +13,38 @@
         }
         * { box-sizing: border-box; margin: 0; padding: 0; }
         body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; background: var(--bg); color: var(--text); height: 100vh; display: flex; flex-direction: column; overflow: hidden; }
-        
+
         /* Layout */
         header { background: rgba(255,255,255,0.8); backdrop-filter: blur(10px); padding: 0.75rem 1rem; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #e2e8f0; }
         .step { display: none; flex: 1; overflow-y: auto; padding: 1rem; }
         .step.active { display: flex; flex-direction: column; }
-        
+
         /* UI Elements */
         .btn { background: var(--primary); color: white; border: none; padding: 0.8rem 1.5rem; border-radius: 40px; font-weight: 600; cursor: pointer; transition: 0.2s; display: inline-flex; align-items: center; gap: 0.5rem; justify-content: center; }
         .btn:active { transform: scale(0.95); opacity: 0.9; }
         .btn-outline { background: transparent; border: 2px solid #cbd5e1; color: var(--text); }
         .btn-group { display: flex; gap: 0.5rem; margin-top: 1rem; flex-wrap: wrap; justify-content: center; }
+
+        /* New PDF Button Styles */
+        .pdf-btn {
+            display:inline-block;
+            padding:16px 30px;
+            background:linear-gradient(135deg,#007BFF,#00C6FF);
+            color:#fff;
+            text-decoration:none;
+            font-family:Arial,Helvetica,sans-serif;
+            font-size:18px;
+            font-weight:bold;
+            text-align:center;
+            border-radius:14px;
+            box-shadow:0 8px 20px rgba(0,123,255,.35);
+            transition:all .3s ease;
+            letter-spacing:.5px;
+            margin-top: 20px;
+        }
+        .pdf-btn small { display:block; font-size:13px; font-weight:normal; margin-top:5px; opacity:.9; }
+        .pdf-btn:hover { transform:translateY(-4px) scale(1.03); box-shadow:0 14px 28px rgba(0,123,255,.45); background:linear-gradient(135deg,#0056D2,#0099FF); }
+        .pdf-btn:active { transform:scale(.98); }
 
         /* Loader Overlay */
         #loader-overlay { display: none; position: fixed; inset: 0; background: rgba(255,255,255,0.9); z-index: 1000; flex-direction: column; align-items: center; justify-content: center; font-weight: bold; }
@@ -39,14 +60,13 @@
         .page-card { background: var(--card); padding: 0.5rem; border-radius: 12px; border: 1px solid #e2e8f0; display: flex; flex-direction: column; gap: 0.5rem; }
         .page-img-wrap { aspect-ratio: 1/1.414; background: #f1f5f9; position: relative; border-radius: 8px; overflow: hidden; }
         .page-img-wrap img { width: 100%; height: 100%; object-fit: contain; }
-        
+
         /* Badges & Overlays */
         .toast { position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%); background: #334155; color: white; padding: 10px 20px; border-radius: 30px; z-index: 2000; font-size: 0.9rem; }
         .badge { font-size: 0.65rem; padding: 2px 6px; border-radius: 4px; background: rgba(0,0,0,0.6); color: white; position: absolute; bottom: 4px; right: 4px; }
     </style>
 </head>
 <body>
-
     <header>
         <div style="font-weight: 800; font-size: 1.1rem;">📄 SHM Scanner</div>
         <button class="btn" style="padding: 0.4rem 1rem; font-size: 0.8rem;" onclick="location.reload()">Reset</button>
@@ -62,7 +82,12 @@
                 <label class="btn">📸 Camera<input type="file" accept="image/*" capture="environment" style="display:none;" onchange="handleFile(event)"></label>
                 <label class="btn btn-outline">🖼️ Import<input type="file" accept="image/*" style="display:none;" onchange="handleFile(event)"></label>
             </div>
-            <a href="compress.html" style="color: var(--primary); font-size: 0.9rem; margin-top: 1rem;">Go to PDF Splitter &rarr;</a>
+            
+            <!-- Stylish PDF Button Added Here -->
+            <a href="compress.html" class="pdf-btn">
+                📄 Split & Compress PDF<br>
+                <small>Within 180 KB</small>
+            </a>
         </div>
     </div>
 
@@ -90,7 +115,7 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.5.13/cropper.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
     <script>
-        let pages = []; // Array of {original: dataUrl, compressed: dataUrl}
+        let pages = []; 
         let cropper = null;
         const editorImg = document.getElementById('editor-image');
         const loader = document.getElementById('loader-overlay');
@@ -133,7 +158,6 @@
                 const img = new Image();
                 img.onload = () => {
                     const canvas = document.createElement('canvas');
-                    // Resize large images to save memory
                     const max = 1500;
                     let w = img.width, h = img.height;
                     if(w > max) { h *= (max/w); w = max; }
@@ -151,7 +175,6 @@
             const canvas = cropper.getCroppedCanvas();
             const original = canvas.toDataURL('image/jpeg', 0.9);
             const compressed = await compressImage(original, 0.5);
-            
             pages.push({ original, compressed });
             showToast("Page Saved");
             hideLoader();
@@ -174,13 +197,12 @@
         }
 
         function removePage(i) { pages.splice(i, 1); renderGrid(); }
-
+        
         async function exportDoc(type) {
             if(pages.length === 0) return;
             showLoader("Generating PDF...");
             const { jsPDF } = window.jspdf;
             const pdf = new jsPDF('p', 'mm', 'a4');
-            
             for(let i=0; i<pages.length; i++) {
                 if(i > 0) pdf.addPage();
                 pdf.addImage(pages[i].compressed, 'JPEG', 0, 0, 210, 297);
