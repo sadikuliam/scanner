@@ -39,10 +39,26 @@
     header {
       padding: 1rem;
       background: var(--surface);
-      text-align: center;
-      font-size: 1.2rem;
-      font-weight: bold;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
       border-bottom: 1px solid #333;
+    }
+
+    .header-title {
+      font-size: 1.1rem;
+      font-weight: bold;
+    }
+
+    .header-install-btn {
+      background: var(--accent);
+      color: white;
+      padding: 0.4rem 0.8rem;
+      font-size: 0.85rem;
+      border-radius: 6px;
+      cursor: pointer;
+      border: none;
+      font-weight: bold;
     }
 
     .step {
@@ -166,28 +182,25 @@
       max-height: 100%;
     }
 
-    /* --- CROPPER CUSTOMIZATION: LARGE BLUE SQUARE TOUCH HANDLES --- */
+    /* CROPPER STYLING */
     .cropper-view-box {
       outline: 3px solid var(--primary) !important;
-      outline-color: var(--primary) !important;
     }
 
     .cropper-line {
       background-color: var(--primary) !important;
     }
 
-    /* Large Square Corner & Side Handles */
     .cropper-point {
       background-color: var(--primary) !important;
       width: 22px !important;
       height: 22px !important;
       opacity: 1 !important;
-      border-radius: 0 !important; /* Square shape */
-      border: 2px solid #ffffff !important; /* White border for high visibility */
+      border-radius: 0 !important;
+      border: 2px solid #ffffff !important;
       box-sizing: border-box !important;
     }
 
-    /* Offset handle positions for centered touch alignment */
     .cropper-point.point-e { right: -11px !important; margin-top: -11px !important; }
     .cropper-point.point-w { left: -11px !important; margin-top: -11px !important; }
     .cropper-point.point-n { top: -11px !important; margin-left: -11px !important; }
@@ -288,7 +301,7 @@
       border: 1px solid #fff;
     }
 
-    /* --- INSTALL APP POPUP MODAL --- */
+    /* --- INSTALL DESKTOP/MOBILE POPUP MODAL --- */
     .install-modal-overlay {
       display: none;
       position: fixed;
@@ -296,7 +309,7 @@
       left: 0;
       width: 100vw;
       height: 100vh;
-      background: rgba(0, 0, 0, 0.75);
+      background: rgba(0, 0, 0, 0.8);
       z-index: 9999;
       justify-content: center;
       align-items: center;
@@ -349,11 +362,32 @@
     .install-modal-actions button {
       flex: 1;
     }
+
+    /* Status Toast Alert */
+    #status-toast {
+      display: none;
+      position: fixed;
+      bottom: 20px;
+      left: 50%;
+      transform: translateX(-50%);
+      background: #333;
+      color: #fff;
+      padding: 12px 20px;
+      border-radius: 8px;
+      border: 1px solid #555;
+      font-size: 0.9rem;
+      z-index: 10000;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.5);
+      text-align: center;
+    }
   </style>
 </head>
 <body>
 
-  <header id="header-title">SHMscanner</header>
+  <header>
+    <span id="header-title" class="header-title">SHMscanner</span>
+    <button class="header-install-btn" onclick="openInstallPrompt()">📲 Install App</button>
+  </header>
 
   <!-- STEP 1: CAPTURE -->
   <div id="step-1" class="step active">
@@ -398,8 +432,6 @@
 
   <!-- STEP 3: PREVIEW & SIZE OPTIONS -->
   <div id="step-3" class="step">
-    
-    <!-- EXPORT SIZE OPTION SELECTOR -->
     <div class="size-mode-container">
       <span class="size-mode-title">Select Output File Size Target:</span>
       <div class="mode-toggle-group">
@@ -423,52 +455,65 @@
     </div>
   </div>
 
-  <!-- INSTALL DESKTOP/MOBILE POPUP MODAL -->
+  <!-- INSTALL POPUP MODAL -->
   <div id="install-modal" class="install-modal-overlay">
     <div class="install-modal-box">
       <div class="install-icon">💻📱</div>
-      <div class="install-modal-title">Install SHM Scanner</div>
-      <div class="install-modal-desc">
-        Install SHM Scanner on your Desktop or Device for fast, offline-ready document scanning and easy access anytime!
+      <div class="install-modal-title">Install SHM Scanner App</div>
+      <div class="install-modal-desc" id="install-desc-text">
+        Click 'Install' to add SHM Scanner directly to your Desktop or Mobile Home Screen for quick offline access!
       </div>
       <div class="install-modal-actions">
-        <button class="secondary" onclick="closeInstallModal()">Not Now</button>
-        <button onclick="triggerAppInstall()">🚀 Install App</button>
+        <button class="secondary" onclick="closeInstallModal()">Close</button>
+        <button id="install-confirm-btn" onclick="triggerAppInstall()">🚀 Install Now</button>
       </div>
     </div>
   </div>
+
+  <!-- STATUS TOAST -->
+  <div id="status-toast"></div>
 
   <script src="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.5.13/cropper.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 
   <script>
     const A4_ASPECT_RATIO = 210 / 297;
-    const TARGET_MAX_BYTES = 100 * 1024; // 100 KB Limit
+    const TARGET_MAX_BYTES = 100 * 1024;
 
     let scannedPagesOriginal = [];
     let scannedPagesCompressed = [];
     let cropper = null;
     let currentFilter = 'original';
-    let selectedSizeMode = 'compressed'; // 'compressed' or 'original'
-    let deferredPrompt = null; // Store browser install event
+    let selectedSizeMode = 'compressed';
+    let deferredPrompt = null;
 
     const editorImg = document.getElementById('editor-image');
     const pagesGrid = document.getElementById('pages-grid');
     const installModal = document.getElementById('install-modal');
 
-    // Handle PWA BeforeInstallPrompt Event
+    // Register PWA Install Event
     window.addEventListener('beforeinstallprompt', (e) => {
-      // Prevent automatic browser banner
       e.preventDefault();
       deferredPrompt = e;
-
-      // Check if user previously closed modal in this session
+      
+      // Auto pop up on first visit
       if (!sessionStorage.getItem('installPromptDismissed')) {
         setTimeout(() => {
           installModal.style.display = 'flex';
-        }, 1500); // Display popup after 1.5 seconds
+        }, 1000);
       }
     });
+
+    function showToast(msg) {
+      const toast = document.getElementById('status-toast');
+      toast.innerText = msg;
+      toast.style.display = 'block';
+      setTimeout(() => { toast.style.display = 'none'; }, 4000);
+    }
+
+    function openInstallPrompt() {
+      installModal.style.display = 'flex';
+    }
 
     function closeInstallModal() {
       installModal.style.display = 'none';
@@ -476,18 +521,20 @@
     }
 
     async function triggerAppInstall() {
-      installModal.style.display = 'none';
       if (deferredPrompt) {
         deferredPrompt.prompt();
         const { outcome } = await deferredPrompt.userChoice;
         if (outcome === 'accepted') {
-          console.log('User accepted the install prompt');
+          showToast('✅ App installation started!');
         } else {
-          console.log('User dismissed the install prompt');
+          showToast('❌ Installation dismissed.');
         }
         deferredPrompt = null;
+        closeInstallModal();
       } else {
-        alert('To install this app on Desktop: Click your browser menu (⋮ or ⊕) and select "Install SHM Scanner" or "Create Shortcut".');
+        // Fallback instructions if native prompt is blocked/unavailable
+        alert('ℹ️ Direct auto-prompt is unavailable on this browser connection.\n\nTo Install Manually:\n1. Open your browser menu (⋮ or ⊕) in top-right.\n2. Click "Install SHM Scanner" or "Add to Home Screen".');
+        closeInstallModal();
       }
     }
 
@@ -496,15 +543,14 @@
       document.getElementById(`step-${step}`).classList.add('active');
 
       const titles = {
-        1: "CamScanner A4 - Step 1: High Quality Capture",
-        2: "CamScanner A4 - Step 2: Crop & Enhance",
-        3: "CamScanner A4 - Step 3: Preview & Export Options"
+        1: "SHMscanner - Step 1: Capture",
+        2: "SHMscanner - Step 2: Crop & Filter",
+        3: "SHMscanner - Step 3: Export Options"
       };
       document.getElementById('header-title').innerText = titles[step];
       if (step === 3) renderPages();
     }
 
-    // Toggle export size mode between 100KB mode and Original
     function setSizeMode(mode) {
       selectedSizeMode = mode;
       document.getElementById('mode-100kb').classList.toggle('active-mode', mode === 'compressed');
@@ -534,7 +580,6 @@
       
       if (cropper) cropper.destroy();
       
-      // Large blue square box locked to default A4 ratio
       cropper = new Cropper(editorImg, {
         aspectRatio: A4_ASPECT_RATIO,
         viewMode: 1,
@@ -554,7 +599,6 @@
       document.getElementById(`f-${filterType}`)?.classList.add('active-filter');
     }
 
-    // Process canvas filters
     function applyFilterToCanvas(canvas) {
       if (currentFilter === 'original') return canvas;
 
@@ -579,7 +623,6 @@
       return canvas;
     }
 
-    // Dynamic Compression Engine (<100KB Target)
     function compressToTargetSize(sourceCanvas, targetSizeBytes = TARGET_MAX_BYTES) {
       let quality = 0.75;
       let width = sourceCanvas.width;
@@ -612,7 +655,6 @@
       return dataUrl;
     }
 
-    // Original High-Quality Data Pipeline
     function getOriginalQualityDataUrl(sourceCanvas) {
       const fullCanvas = document.createElement('canvas');
       fullCanvas.width = sourceCanvas.width;
@@ -631,7 +673,6 @@
         imageSmoothingQuality: 'high'
       });
 
-      // Generate both original and <100KB variants for instant switching
       const originalUrl = getOriginalQualityDataUrl(croppedCanvas);
       const compressedUrl = compressToTargetSize(croppedCanvas);
 
@@ -672,7 +713,6 @@
       });
     }
 
-    // Rotate function for Preview (Step 3)
     function rotatePreviewPage(idx) {
       const img = new Image();
       img.src = scannedPagesOriginal[idx];
@@ -686,11 +726,9 @@
         ctx.rotate((90 * Math.PI) / 180);
         ctx.drawImage(img, -img.width / 2, -img.height / 2);
 
-        // Update Original
         const newOriginal = canvas.toDataURL('image/jpeg', 0.95);
         scannedPagesOriginal[idx] = newOriginal;
 
-        // Update Compressed
         const newCompressed = compressToTargetSize(canvas);
         scannedPagesCompressed[idx] = newCompressed;
 
