@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>SHM Scanner</title>
+  <title>SHM Scanner - High Quality</title>
   <link rel="manifest" href="manifest.json" />
   
   <!-- CSS Dependencies -->
@@ -163,6 +163,7 @@
       text-align: center;
     }
 
+    /* Editor Container */
     .editor-container {
       flex: 1;
       max-height: 55vh;
@@ -172,11 +173,13 @@
       background: #000;
       border-radius: 8px;
       overflow: hidden;
+      position: relative;
     }
 
     img#editor-image {
       max-width: 100%;
       max-height: 100%;
+      display: none; /* Hidden until loaded and processed */
     }
 
     /* CROPPER STYLING */
@@ -551,21 +554,56 @@
     document.getElementById('system-camera-input').addEventListener('change', handleFileSelect);
     document.getElementById('file-input').addEventListener('change', handleFileSelect);
 
+    // --- HIGH QUALITY IMAGE LOADING LOGIC ---
     function handleFileSelect(e) {
       const files = e.target.files;
       if (!files || !files.length) return;
       
+      showToast('Processing high quality image...');
+      
+      const file = files[0];
       const reader = new FileReader();
+      
       reader.onload = (evt) => {
-        loadImageToEditor(evt.target.result);
-        e.target.value = '';
+        const img = new Image();
+        img.onload = () => {
+          // --- CANVAS BASED RESIZING TO PRESERVE QUALITY ---
+          // Mobile browsers downsample huge images in <img> tags.
+          // We draw the image to a large canvas first to lock in quality.
+          const canvas = document.createElement('canvas');
+          const ctx = canvas.getContext('2d');
+          
+          // Target a high resolution (e.g., 2500px width) for the editor
+          const TARGET_EDITOR_WIDTH = 2500; 
+          let width = img.width;
+          let height = img.height;
+          
+          if (width > TARGET_EDITOR_WIDTH) {
+            height = Math.round((height * TARGET_EDITOR_WIDTH) / width);
+            width = TARGET_EDITOR_WIDTH;
+          }
+          
+          canvas.width = width;
+          canvas.height = height;
+          
+          // Draw image with high quality smoothing
+          ctx.imageSmoothingEnabled = true;
+          ctx.imageSmoothingQuality = 'high';
+          ctx.drawImage(img, 0, 0, width, height);
+          
+          // Load the processed large canvas back to the editor
+          loadImageToEditor(canvas.toDataURL('image/jpeg', 0.95));
+          e.target.value = ''; // Reset input
+        };
+        img.src = evt.target.result;
       };
-      reader.readAsDataURL(files[0]);
+      reader.readAsDataURL(file);
     }
 
     function loadImageToEditor(imageSrc) {
       goToStep(2);
       editorImg.src = imageSrc;
+      editorImg.style.display = 'block'; // Show image
       setFilter('original');
       
       if (cropper) cropper.destroy();
@@ -579,7 +617,9 @@
         guides: true,
         center: true,
         cropBoxMovable: true,
-        cropBoxResizable: true
+        cropBoxResizable: true,
+        // High quality setting for cropper
+        imageSmoothingQuality: 'high'
       });
     }
 
@@ -604,9 +644,10 @@
           let val = gray > 125 ? 255 : (gray * 0.75);
           data[i] = data[i+1] = data[i+2] = val;
         } else if (currentFilter === 'enhance') {
-          data[i]     = Math.min(255, (r - 128) * 1.25 + 135);
-          data[i + 1] = Math.min(255, (g - 128) * 1.25 + 135);
-          data[i + 2] = Math.min(255, (b - 128) * 1.25 + 135);
+          // Sharp contrast enhancement for documents
+          data[i]     = Math.min(255, (r - 128) * 1.4 + 128);
+          data[i + 1] = Math.min(255, (g - 128) * 1.4 + 128);
+          data[i + 2] = Math.min(255, (b - 128) * 1.4 + 128);
         }
       }
       ctx.putImageData(imgData, 0, 0);
@@ -618,13 +659,13 @@
       return Math.round((base64WithoutHeader.length * 3) / 4);
     }
 
-    // HIGH QUALITY COMPRESSION FUNCTION
-    function compressToTargetSize(sourceCanvas, targetSizeBytes = 250 * 1024) {
-      let quality = 0.82;
+    // --- UPDATED OPTIMIZED COMPRESSION FUNCTION (BALANCE OF SIZE & QUALITY) ---
+    function compressToTargetSize(sourceCanvas, targetSizeBytes = 300 * 1024) { // Target ~300 KB
+      let quality = 0.85;
       let width = sourceCanvas.width;
       let height = sourceCanvas.height;
 
-      // Keep resolution high for sharp text reading
+      // Keep resolution high (1200px) for readable text
       let maxDim = 1200; 
       if (width > maxDim || height > maxDim) {
         if (width > height) {
@@ -643,11 +684,16 @@
       
       ctx.fillStyle = '#FFFFFF';
       ctx.fillRect(0, 0, width, height);
+      
+      // Use high quality smoothing when resizing for export
+      ctx.imageSmoothingEnabled = true;
+      ctx.imageSmoothingQuality = 'high';
       ctx.drawImage(sourceCanvas, 0, 0, width, height);
       applyFilterToCanvas(tempCanvas);
 
       let dataUrl = tempCanvas.toDataURL('image/jpeg', quality);
 
+      // Don't let quality drop below 50% to prevent artifacts
       while (getByteSize(dataUrl) > targetSizeBytes && quality > 0.50) {
         quality -= 0.05;
         dataUrl = tempCanvas.toDataURL('image/jpeg', quality);
@@ -663,15 +709,18 @@
       const ctx = fullCanvas.getContext('2d');
       ctx.fillStyle = '#FFFFFF';
       ctx.fillRect(0, 0, fullCanvas.width, fullCanvas.height);
+      
+      // Preserve full source resolution
       ctx.drawImage(sourceCanvas, 0, 0);
       applyFilterToCanvas(fullCanvas);
       
-      return fullCanvas.toDataURL('image/jpeg', 0.95);
+      return fullCanvas.toDataURL('image/jpeg', 0.95); // High quality HD
     }
 
     function saveCurrentPage() {
       if (!cropper) return;
       
+      // Get cropped canvas at full resolution
       const croppedCanvas = cropper.getCroppedCanvas({
         imageSmoothingQuality: 'high'
       });
@@ -707,7 +756,7 @@
         card.innerHTML = `
           <div class="page-card-image-wrap">
             <img src="${src}" />
-            <span class="page-badge">${selectedSizeMode === 'compressed' ? 'Optimized' : 'Original'}</span>
+            <span class="page-badge">${selectedSizeMode === 'compressed' ? 'Optimized' : 'HD Original'}</span>
             <button class="delete-btn" onclick="deletePage(${idx})">×</button>
           </div>
           <button class="rotate-card-btn" onclick="rotatePreviewPage(${idx})">🔄 Rotate 90°</button>
@@ -727,6 +776,10 @@
         const ctx = canvas.getContext('2d');
         ctx.fillStyle = '#FFFFFF';
         ctx.fillRect(0, 0, canvas.width, canvas.height);
+        
+        ctx.imageSmoothingEnabled = true;
+        ctx.imageSmoothingQuality = 'high';
+        
         ctx.translate(canvas.width / 2, canvas.height / 2);
         ctx.rotate((90 * Math.PI) / 180);
         ctx.drawImage(img, -img.width / 2, -img.height / 2);
@@ -760,6 +813,7 @@
 
       pages.forEach((pageData, index) => {
         if (index > 0) pdf.addPage('a4', 'portrait');
+        // Use 'SLOW' alias for high quality image rendering in PDF
         pdf.addImage(pageData, 'JPEG', 0, 0, 210, 297, undefined, 'SLOW');
       });
 
