@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>SHM Scanner - Single Page < 100KB</title>
+  <title>SHM Scanner - High Quality</title>
   <link rel="manifest" href="manifest.json" />
   
   <!-- CSS Dependencies -->
@@ -19,7 +19,12 @@
       --accent: #28a745;
     }
 
-    * { box-sizing: border-box; margin: 0; padding: 0; font-family: sans-serif; }
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    }
 
     body {
       background-color: var(--bg);
@@ -32,7 +37,7 @@
     }
 
     header {
-      padding: 0.8rem 1rem;
+      padding: 1rem;
       background: var(--surface);
       display: flex;
       justify-content: space-between;
@@ -40,7 +45,21 @@
       border-bottom: 1px solid #333;
     }
 
-    .header-title { font-size: 1.1rem; font-weight: bold; }
+    .header-title {
+      font-size: 1.1rem;
+      font-weight: bold;
+    }
+
+    .header-install-btn {
+      background: var(--accent);
+      color: white;
+      padding: 0.4rem 0.8rem;
+      font-size: 0.85rem;
+      border-radius: 6px;
+      cursor: pointer;
+      border: none;
+      font-weight: bold;
+    }
 
     .step {
       display: none;
@@ -50,7 +69,9 @@
       overflow-y: auto;
     }
 
-    .step.active { display: flex; }
+    .step.active {
+      display: flex;
+    }
 
     .btn-group {
       display: flex;
@@ -79,9 +100,17 @@
       gap: 0.5rem;
     }
 
-    button:active, .btn-label:active { opacity: 0.8; }
-    button.secondary, .btn-label.secondary { background: #333; }
-    button.share-btn { background: #17a2b8; }
+    button:active, .btn-label:active {
+      opacity: 0.8;
+    }
+
+    button.secondary, .btn-label.secondary {
+      background: #333;
+    }
+
+    button.share-btn {
+      background: #17a2b8;
+    }
 
     .size-mode-container {
       background: var(--surface);
@@ -95,13 +124,17 @@
       gap: 0.5rem;
     }
 
-    .size-mode-title { font-size: 0.9rem; color: var(--text-dim); font-weight: 600; }
+    .size-mode-title {
+      font-size: 0.9rem;
+      color: var(--text-dim);
+      font-weight: 600;
+    }
 
     .mode-toggle-group {
       display: flex;
       gap: 0.5rem;
       width: 100%;
-      max-width: 420px;
+      max-width: 400px;
     }
 
     .mode-btn {
@@ -114,7 +147,11 @@
       font-size: 0.85rem;
     }
 
-    .mode-btn.active-mode { background: var(--primary); color: #fff; border-color: #fff; }
+    .mode-btn.active-mode {
+      background: var(--primary);
+      color: #fff;
+      border-color: #fff;
+    }
 
     .capture-container {
       flex: 1;
@@ -126,9 +163,10 @@
       text-align: center;
     }
 
+    /* Editor Container */
     .editor-container {
       flex: 1;
-      max-height: 60vh;
+      max-height: 55vh;
       display: flex;
       justify-content: center;
       align-items: center;
@@ -138,34 +176,49 @@
       position: relative;
     }
 
-    img#editor-image { max-width: 100%; max-height: 100%; display: block; }
-
-    /* CROPPER STYLING */
-    .cropper-view-box { outline: 3px solid var(--primary) !important; }
-    .cropper-line { background-color: var(--primary) !important; }
-    .cropper-point {
-      background-color: var(--primary) !important;
-      width: 24px !important;
-      height: 24px !important;
-      border-radius: 0 !important;
-      border: 2px solid #ffffff !important;
+    img#editor-image {
+      max-width: 100%;
+      max-height: 100%;
+      display: none; /* Hidden until loaded and processed */
     }
 
-    .cropper-point.point-e { right: -12px !important; margin-top: -12px !important; }
-    .cropper-point.point-w { left: -12px !important; margin-top: -12px !important; }
-    .cropper-point.point-n { top: -12px !important; margin-left: -12px !important; }
-    .cropper-point.point-s { bottom: -12px !important; margin-left: -12px !important; }
+    /* CROPPER STYLING */
+    .cropper-view-box {
+      outline: 3px solid var(--primary) !important;
+    }
 
-    .cropper-point.point-ne { right: -12px !important; top: -12px !important; }
-    .cropper-point.point-nw { left: -12px !important; top: -12px !important; }
-    .cropper-point.point-sw { left: -12px !important; bottom: -12px !important; }
-    .cropper-point.point-se { right: -12px !important; bottom: -12px !important; }
+    .cropper-line {
+      background-color: var(--primary) !important;
+    }
 
-    .cropper-bg { background-image: none !important; background-color: #000 !important; }
+    .cropper-point {
+      background-color: var(--primary) !important;
+      width: 22px !important;
+      height: 22px !important;
+      opacity: 1 !important;
+      border-radius: 0 !important;
+      border: 2px solid #ffffff !important;
+      box-sizing: border-box !important;
+    }
+
+    .cropper-point.point-e { right: -11px !important; margin-top: -11px !important; }
+    .cropper-point.point-w { left: -11px !important; margin-top: -11px !important; }
+    .cropper-point.point-n { top: -11px !important; margin-left: -11px !important; }
+    .cropper-point.point-s { bottom: -11px !important; margin-left: -11px !important; }
+
+    .cropper-point.point-ne { right: -11px !important; top: -11px !important; }
+    .cropper-point.point-nw { left: -11px !important; top: -11px !important; }
+    .cropper-point.point-sw { left: -11px !important; bottom: -11px !important; }
+    .cropper-point.point-se { right: -11px !important; bottom: -11px !important; }
+
+    .cropper-bg {
+      background-image: none !important;
+      background-color: #000 !important;
+    }
 
     .grid {
       display: grid;
-      grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+      grid-template-columns: repeat(auto-fill, minmax(130px, 1fr));
       gap: 1rem;
       width: 100%;
     }
@@ -178,38 +231,45 @@
       display: flex;
       flex-direction: column;
       border: 1px solid #333;
+    }
+
+    .page-card-image-wrap {
+      position: relative;
+      width: 100%;
       aspect-ratio: 1 / 1.414;
     }
 
-    .page-card img { width: 100%; height: 100%; object-fit: contain; background: #fff; }
+    .page-card img {
+      width: 100%;
+      height: 100%;
+      object-fit: contain;
+      background: #fff;
+    }
 
     .page-card .delete-btn {
       position: absolute;
       top: 4px;
       right: 4px;
-      background: rgba(220, 53, 69, 0.85);
+      background: rgba(255, 0, 0, 0.85);
       color: white;
       border-radius: 50%;
-      width: 26px;
-      height: 26px;
+      width: 24px;
+      height: 24px;
+      padding: 0;
       display: flex;
       align-items: center;
       justify-content: center;
       font-weight: bold;
-      z-index: 10;
-      border: none;
-      cursor: pointer;
     }
 
     .page-badge {
       position: absolute;
       bottom: 4px;
       left: 4px;
-      background: rgba(0, 0, 0, 0.8);
-      font-size: 0.72rem;
-      padding: 3px 6px;
+      background: rgba(0, 0, 0, 0.7);
+      font-size: 0.7rem;
+      padding: 2px 6px;
       border-radius: 4px;
-      color: #00ff66;
     }
 
     .rotate-card-btn {
@@ -217,24 +277,89 @@
       color: #fff;
       border: none;
       border-top: 1px solid #444;
-      padding: 0.5rem;
-      font-size: 0.85rem;
+      padding: 0.4rem 0.5rem;
+      font-size: 0.8rem;
       border-radius: 0 0 8px 8px;
       cursor: pointer;
       width: 100%;
     }
 
-    .rotate-card-btn:hover { background: var(--primary); }
+    .rotate-card-btn:hover {
+      background: var(--primary);
+    }
 
     .filter-options {
       display: flex;
       gap: 0.5rem;
       justify-content: center;
       margin: 1rem 0;
-      flex-wrap: wrap;
     }
-    .filter-options button { padding: 0.6rem 1rem; font-size: 0.85rem; }
-    .filter-options button.active-filter { background: var(--primary); border: 1px solid #fff; }
+
+    .filter-options button.active-filter {
+      background: var(--primary);
+      border: 1px solid #fff;
+    }
+
+    .install-modal-overlay {
+      display: none;
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100vw;
+      height: 100vh;
+      background: rgba(0, 0, 0, 0.8);
+      z-index: 9999;
+      justify-content: center;
+      align-items: center;
+      padding: 1rem;
+      backdrop-filter: blur(4px);
+    }
+
+    .install-modal-box {
+      background: var(--surface);
+      border: 1px solid #444;
+      border-radius: 16px;
+      padding: 1.5rem;
+      max-width: 420px;
+      width: 100%;
+      text-align: center;
+      box-shadow: 0 10px 25px rgba(0, 0, 0, 0.5);
+      animation: modalSlideUp 0.3s ease-out;
+    }
+
+    @keyframes modalSlideUp {
+      from { transform: translateY(30px); opacity: 0; }
+      to { transform: translateY(0); opacity: 1; }
+    }
+
+    .install-icon {
+      font-size: 3rem;
+      margin-bottom: 0.5rem;
+    }
+
+    .install-modal-title {
+      font-size: 1.25rem;
+      font-weight: bold;
+      margin-bottom: 0.5rem;
+      color: var(--text);
+    }
+
+    .install-modal-desc {
+      font-size: 0.9rem;
+      color: var(--text-dim);
+      margin-bottom: 1.25rem;
+      line-height: 1.4;
+    }
+
+    .install-modal-actions {
+      display: flex;
+      gap: 0.75rem;
+      justify-content: center;
+    }
+
+    .install-modal-actions button {
+      flex: 1;
+    }
 
     #status-toast {
       display: none;
@@ -246,6 +371,7 @@
       color: #fff;
       padding: 12px 20px;
       border-radius: 8px;
+      border: 1px solid #555;
       font-size: 0.9rem;
       z-index: 10000;
       box-shadow: 0 4px 12px rgba(0,0,0,0.5);
@@ -257,15 +383,15 @@
 
   <header>
     <span id="header-title" class="header-title">SHMscanner</span>
-    <button class="header-install-btn" style="background:var(--accent); color:white; padding:4px 8px; border-radius:4px; border:none;" onclick="alert('Use browser menu to install')">📲 Install</button>
+    <button class="header-install-btn" onclick="openInstallPrompt()">📲 Install App</button>
   </header>
 
   <!-- STEP 1: CAPTURE -->
   <div id="step-1" class="step active">
     <div class="capture-container">
-      <h3>Scan Documents Perfectly</h3>
-      <p style="color: var(--text-dim); max-width: 320px;">
-        Single A4 page size will be strictly under 100KB.
+      <h3>Take High Quality Document Photos</h3>
+      <p style="color: var(--text-dim); max-width: 300px;">
+        Use your camera to scan documents or choose an existing photo from your gallery.
       </p>
       
       <div class="btn-group">
@@ -275,7 +401,7 @@
         </label>
         
         <label class="btn-label secondary">
-          🖼️ Import Gallery
+          🖼️ Import from Gallery
           <input type="file" id="file-input" accept="image/*" style="display:none;" />
         </label>
       </div>
@@ -289,13 +415,13 @@
     </div>
     
     <div class="filter-options">
-      <button class="secondary active-filter" id="f-original" onclick="setFilter('original')">Original HD</button>
+      <button class="secondary active-filter" id="f-original" onclick="setFilter('original')">Original</button>
       <button class="secondary" id="f-enhance" onclick="setFilter('enhance')">Magic Scan</button>
-      <button class="secondary" id="f-bw" onclick="setFilter('bw')">B&W Clear</button>
+      <button class="secondary" id="f-bw" onclick="setFilter('bw')">B&W</button>
     </div>
 
     <div class="btn-group">
-      <button class="secondary" onclick="cancelCrop()">Cancel</button>
+      <button class="secondary" onclick="goToStep(1)">Cancel</button>
       <button id="save-page-btn">Save & Add Next Page</button>
       <button id="finish-crop-btn">Save & Preview Document</button>
     </div>
@@ -304,13 +430,13 @@
   <!-- STEP 3: PREVIEW & SIZE OPTIONS -->
   <div id="step-3" class="step">
     <div class="size-mode-container">
-      <span class="size-mode-title">Select Quality Mode (Applies to PDF & JPG):</span>
+      <span class="size-mode-title">Select Output File Size Target:</span>
       <div class="mode-toggle-group">
         <button id="mode-100kb" class="mode-btn active-mode" onclick="setSizeMode('compressed')">
-          ⚡ Single Page < 100KB Mode
+          ⚡ Clear Optimized Mode
         </button>
         <button id="mode-original" class="mode-btn" onclick="setSizeMode('original')">
-          💎 Original Full HD
+          💎 Original HD Quality
         </button>
       </div>
     </div>
@@ -326,6 +452,22 @@
     </div>
   </div>
 
+  <!-- INSTALL POPUP MODAL -->
+  <div id="install-modal" class="install-modal-overlay">
+    <div class="install-modal-box">
+      <div class="install-icon">💻📱</div>
+      <div class="install-modal-title">Install SHM Scanner App</div>
+      <div class="install-modal-desc" id="install-desc-text">
+        Click 'Install' to add SHM Scanner directly to your Desktop or Mobile Home Screen for quick offline access!
+      </div>
+      <div class="install-modal-actions">
+        <button class="secondary" onclick="closeInstallModal()">Close</button>
+        <button id="install-confirm-btn" onclick="triggerAppInstall()">🚀 Install Now</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- STATUS TOAST -->
   <div id="status-toast"></div>
 
   <script src="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.5.13/cropper.min.js"></script>
@@ -334,30 +476,69 @@
   <script>
     const A4_ASPECT_RATIO = 210 / 297;
 
-    let scannedPagesOriginal = []; // Stores Full HD dataURLs
-    let scannedPagesCompressed = []; // Stores <100KB dataURLs
+    let scannedPagesOriginal = [];
+    let scannedPagesCompressed = [];
     let cropper = null;
     let currentFilter = 'original';
     let selectedSizeMode = 'compressed';
-    let originalImageObjectURL = null;
+    let deferredPrompt = null;
 
     const editorImg = document.getElementById('editor-image');
     const pagesGrid = document.getElementById('pages-grid');
+    const installModal = document.getElementById('install-modal');
+
+    window.addEventListener('beforeinstallprompt', (e) => {
+      e.preventDefault();
+      deferredPrompt = e;
+      
+      if (!sessionStorage.getItem('installPromptDismissed')) {
+        setTimeout(() => {
+          installModal.style.display = 'flex';
+        }, 1000);
+      }
+    });
 
     function showToast(msg) {
       const toast = document.getElementById('status-toast');
       toast.innerText = msg;
       toast.style.display = 'block';
-      setTimeout(() => toast.style.display = 'none', 3000);
+      setTimeout(() => { toast.style.display = 'none'; }, 4000);
+    }
+
+    function openInstallPrompt() {
+      installModal.style.display = 'flex';
+    }
+
+    function closeInstallModal() {
+      installModal.style.display = 'none';
+      sessionStorage.setItem('installPromptDismissed', 'true');
+    }
+
+    async function triggerAppInstall() {
+      if (deferredPrompt) {
+        deferredPrompt.prompt();
+        const { outcome } = await deferredPrompt.userChoice;
+        if (outcome === 'accepted') {
+          showToast('✅ App installation started!');
+        } else {
+          showToast('❌ Installation dismissed.');
+        }
+        deferredPrompt = null;
+        closeInstallModal();
+      } else {
+        alert('ℹ️ Direct auto-prompt is unavailable on this browser connection.\n\nTo Install Manually:\n1. Open your browser menu (⋮ or ⊕) in top-right.\n2. Click "Install SHM Scanner" or "Add to Home Screen".');
+        closeInstallModal();
+      }
     }
 
     function goToStep(step) {
       document.querySelectorAll('.step').forEach(s => s.classList.remove('active'));
       document.getElementById(`step-${step}`).classList.add('active');
+
       const titles = {
         1: "SHMscanner - Step 1: Capture",
         2: "SHMscanner - Step 2: Crop & Filter",
-        3: "SHMscanner - Step 3: Preview & Export"
+        3: "SHMscanner - Step 3: Export Options"
       };
       document.getElementById('header-title').innerText = titles[step];
       if (step === 3) renderPages();
@@ -373,41 +554,73 @@
     document.getElementById('system-camera-input').addEventListener('change', handleFileSelect);
     document.getElementById('file-input').addEventListener('change', handleFileSelect);
 
+    // --- HIGH QUALITY IMAGE LOADING LOGIC ---
     function handleFileSelect(e) {
       const files = e.target.files;
       if (!files || !files.length) return;
       
-      const file = files[0];
-      if (originalImageObjectURL) URL.revokeObjectURL(originalImageObjectURL);
-      originalImageObjectURL = URL.createObjectURL(file);
+      showToast('Processing high quality image...');
       
-      goToStep(2);
-      if (cropper) cropper.destroy();
-
-      editorImg.src = originalImageObjectURL;
-      editorImg.onload = () => {
-        cropper = new Cropper(editorImg, {
-          aspectRatio: A4_ASPECT_RATIO,
-          viewMode: 1,
-          autoCropArea: 1,
-          responsive: true,
-          restore: false,
-          checkCrossOrigin: false,
-          checkOrientation: true,
-          background: false,
-          guides: true,
-          center: true,
-          cropBoxMovable: true,
-          cropBoxResizable: true,
-          imageSmoothingQuality: 'high'
-        });
+      const file = files[0];
+      const reader = new FileReader();
+      
+      reader.onload = (evt) => {
+        const img = new Image();
+        img.onload = () => {
+          // --- CANVAS BASED RESIZING TO PRESERVE QUALITY ---
+          // Mobile browsers downsample huge images in <img> tags.
+          // We draw the image to a large canvas first to lock in quality.
+          const canvas = document.createElement('canvas');
+          const ctx = canvas.getContext('2d');
+          
+          // Target a high resolution (e.g., 2500px width) for the editor
+          const TARGET_EDITOR_WIDTH = 2500; 
+          let width = img.width;
+          let height = img.height;
+          
+          if (width > TARGET_EDITOR_WIDTH) {
+            height = Math.round((height * TARGET_EDITOR_WIDTH) / width);
+            width = TARGET_EDITOR_WIDTH;
+          }
+          
+          canvas.width = width;
+          canvas.height = height;
+          
+          // Draw image with high quality smoothing
+          ctx.imageSmoothingEnabled = true;
+          ctx.imageSmoothingQuality = 'high';
+          ctx.drawImage(img, 0, 0, width, height);
+          
+          // Load the processed large canvas back to the editor
+          loadImageToEditor(canvas.toDataURL('image/jpeg', 0.95));
+          e.target.value = ''; // Reset input
+        };
+        img.src = evt.target.result;
       };
-      e.target.value = '';
+      reader.readAsDataURL(file);
     }
 
-    function cancelCrop() {
-      if (originalImageObjectURL) URL.revokeObjectURL(originalImageObjectURL);
-      goToStep(1);
+    function loadImageToEditor(imageSrc) {
+      goToStep(2);
+      editorImg.src = imageSrc;
+      editorImg.style.display = 'block'; // Show image
+      setFilter('original');
+      
+      if (cropper) cropper.destroy();
+      
+      cropper = new Cropper(editorImg, {
+        aspectRatio: A4_ASPECT_RATIO,
+        viewMode: 1,
+        autoCropArea: 0.98,
+        responsive: true,
+        background: false,
+        guides: true,
+        center: true,
+        cropBoxMovable: true,
+        cropBoxResizable: true,
+        // High quality setting for cropper
+        imageSmoothingQuality: 'high'
+      });
     }
 
     function setFilter(filterType) {
@@ -416,10 +629,10 @@
       document.getElementById(`f-${filterType}`)?.classList.add('active-filter');
     }
 
-    function applyFiltersToCanvas(canvas) {
+    function applyFilterToCanvas(canvas) {
       if (currentFilter === 'original') return canvas;
 
-      const ctx = canvas.getContext('2d', { willReadFrequently: true });
+      const ctx = canvas.getContext('2d');
       const imgData = ctx.getImageData(0, 0, canvas.width, canvas.height);
       const data = imgData.data;
 
@@ -428,12 +641,13 @@
 
         if (currentFilter === 'bw') {
           let gray = 0.299 * r + 0.587 * g + 0.114 * b;
-          let val = gray > 130 ? 255 : 0; 
+          let val = gray > 125 ? 255 : (gray * 0.75);
           data[i] = data[i+1] = data[i+2] = val;
         } else if (currentFilter === 'enhance') {
-          data[i]     = Math.min(255, (r - 128) * 1.5 + 135);
-          data[i + 1] = Math.min(255, (g - 128) * 1.5 + 135);
-          data[i + 2] = Math.min(255, (b - 128) * 1.5 + 135);
+          // Sharp contrast enhancement for documents
+          data[i]     = Math.min(255, (r - 128) * 1.4 + 128);
+          data[i + 1] = Math.min(255, (g - 128) * 1.4 + 128);
+          data[i + 2] = Math.min(255, (b - 128) * 1.4 + 128);
         }
       }
       ctx.putImageData(imgData, 0, 0);
@@ -441,114 +655,90 @@
     }
 
     function getByteSize(base64Str) {
-      if (!base64Str) return 0;
       const base64WithoutHeader = base64Str.split(',')[1] || base64Str;
       return Math.round((base64WithoutHeader.length * 3) / 4);
     }
 
-    // --- STRICT SINGLE PAGE < 100KB COMPRESSION ENGINE ---
-    function compressSinglePageTo100KB(hdCanvas) {
-      const TARGET_LIMIT_BYTES = 98 * 1024; // Strict ~98 KB limit
-      let maxDimension = 1200; // Resolution limit (Width or Height) for guaranteed size
+    // --- UPDATED OPTIMIZED COMPRESSION FUNCTION (BALANCE OF SIZE & QUALITY) ---
+    function compressToTargetSize(sourceCanvas, targetSizeBytes = 300 * 1024) { // Target ~300 KB
+      let quality = 0.85;
+      let width = sourceCanvas.width;
+      let height = sourceCanvas.height;
 
-      let width = hdCanvas.width;
-      let height = hdCanvas.height;
-
-      // STEP 1: Downscale dimensions first. This is crucial for high-res camera photos.
-      if (width > maxDimension || height > maxDimension) {
+      // Keep resolution high (1200px) for readable text
+      let maxDim = 1200; 
+      if (width > maxDim || height > maxDim) {
         if (width > height) {
-          height = Math.round((height * maxDimension) / width);
-          width = maxDim; // Fixed width to maxDim, height scales
+          height = Math.round((height * maxDim) / width);
+          width = maxDim;
         } else {
-          width = Math.round((width * maxDimension) / height);
-          height = maxDim; // Fixed height to maxDim, width scales
+          width = Math.round((width * maxDim) / height);
+          height = maxDim;
         }
       }
-      
-      // If the above condition didn't set width/height properly due to typo, let's fix it:
-      if (width > height) {
-          if (width > maxDimension) {
-              height = Math.round((height * maxDimension) / width);
-              width = maxDimension;
-          }
-      } else {
-          if (height > maxDimension) {
-              width = Math.round((width * maxDimension) / height);
-              height = maxDimension;
-          }
-      }
 
-      const canvas = document.createElement('canvas');
-      canvas.width = width;
-      canvas.height = height;
-      const ctx = canvas.getContext('2d');
-      ctx.imageSmoothingEnabled = true;
-      ctx.imageSmoothingQuality = 'high';
+      const tempCanvas = document.createElement('canvas');
+      tempCanvas.width = width;
+      tempCanvas.height = height;
+      const ctx = tempCanvas.getContext('2d');
+      
       ctx.fillStyle = '#FFFFFF';
       ctx.fillRect(0, 0, width, height);
-      ctx.drawImage(hdCanvas, 0, 0, width, height);
-
-      // STEP 2: BINARY SEARCH FOR EXACT QUALITY (<100KB)
-      let minQuality = 0.01;
-      let maxQuality = 0.95;
-      let bestDataUrl = '';
       
-      // We do a few iterations to find the highest quality that fits under the limit
-      for (let i = 0; i < 6; i++) { 
-        let midQuality = (minQuality + maxQuality) / 2;
-        let testUrl = canvas.toDataURL('image/jpeg', midQuality);
-        let testSize = getByteSize(testUrl);
+      // Use high quality smoothing when resizing for export
+      ctx.imageSmoothingEnabled = true;
+      ctx.imageSmoothingQuality = 'high';
+      ctx.drawImage(sourceCanvas, 0, 0, width, height);
+      applyFilterToCanvas(tempCanvas);
 
-        if (testSize <= TARGET_LIMIT_BYTES) {
-          bestDataUrl = testUrl;
-          minQuality = midQuality; // Try higher quality
-        } else {
-          maxQuality = midQuality; // Reduce quality
-        }
+      let dataUrl = tempCanvas.toDataURL('image/jpeg', quality);
+
+      // Don't let quality drop below 50% to prevent artifacts
+      while (getByteSize(dataUrl) > targetSizeBytes && quality > 0.50) {
+        quality -= 0.05;
+        dataUrl = tempCanvas.toDataURL('image/jpeg', quality);
       }
 
-      // Final fallback if something went wrong
-      if (!bestDataUrl) bestDataUrl = canvas.toDataURL('image/jpeg', 0.1); 
-
-      return bestDataUrl;
+      return dataUrl;
     }
 
-    function processAndSavePage() {
+    function getOriginalQualityDataUrl(sourceCanvas) {
+      const fullCanvas = document.createElement('canvas');
+      fullCanvas.width = sourceCanvas.width;
+      fullCanvas.height = sourceCanvas.height;
+      const ctx = fullCanvas.getContext('2d');
+      ctx.fillStyle = '#FFFFFF';
+      ctx.fillRect(0, 0, fullCanvas.width, fullCanvas.height);
+      
+      // Preserve full source resolution
+      ctx.drawImage(sourceCanvas, 0, 0);
+      applyFilterToCanvas(fullCanvas);
+      
+      return fullCanvas.toDataURL('image/jpeg', 0.95); // High quality HD
+    }
+
+    function saveCurrentPage() {
       if (!cropper) return;
       
-      showToast('Optimizing to <100KB...');
-
-      // Get cropped canvas at full source resolution
-      const hdCanvas = cropper.getCroppedCanvas({
-        imageSmoothingEnabled: true,
+      // Get cropped canvas at full resolution
+      const croppedCanvas = cropper.getCroppedCanvas({
         imageSmoothingQuality: 'high'
       });
 
-      if (originalImageObjectURL) {
-        URL.revokeObjectURL(originalImageObjectURL);
-        originalImageObjectURL = null;
-      }
+      const originalUrl = getOriginalQualityDataUrl(croppedCanvas);
+      const compressedUrl = compressToTargetSize(croppedCanvas);
 
-      // Apply selected filter to full-res canvas
-      applyFiltersToCanvas(hdCanvas);
-
-      // Save Full HD Data for "Original Mode" export
-      scannedPagesOriginal.push(hdCanvas.toDataURL('image/jpeg', 0.95));
-
-      // Save Compressed <100KB Data for "Optimized Mode" export
-      scannedPagesCompressed.push(compressSinglePageTo100KB(hdCanvas));
-
-      cropper.destroy();
-      cropper = null;
+      scannedPagesOriginal.push(originalUrl);
+      scannedPagesCompressed.push(compressedUrl);
     }
 
     document.getElementById('save-page-btn').addEventListener('click', () => {
-      processAndSavePage();
+      saveCurrentPage();
       goToStep(1);
     });
 
     document.getElementById('finish-crop-btn').addEventListener('click', () => {
-      processAndSavePage();
+      saveCurrentPage();
       goToStep(3);
     });
 
@@ -563,12 +753,10 @@
       currentPages.forEach((src, idx) => {
         const card = document.createElement('div');
         card.className = 'page-card';
-        const kbSize = (getByteSize(src) / 1024).toFixed(1);
-        
         card.innerHTML = `
           <div class="page-card-image-wrap">
             <img src="${src}" />
-            <span class="page-badge">📏 ${kbSize} KB</span>
+            <span class="page-badge">${selectedSizeMode === 'compressed' ? 'Optimized' : 'HD Original'}</span>
             <button class="delete-btn" onclick="deletePage(${idx})">×</button>
           </div>
           <button class="rotate-card-btn" onclick="rotatePreviewPage(${idx})">🔄 Rotate 90°</button>
@@ -578,8 +766,6 @@
     }
 
     function rotatePreviewPage(idx) {
-      showToast('Rotating...');
-      // We must rotate the original HD data and then re-compress it to maintain <100KB
       const img = new Image();
       img.src = scannedPagesOriginal[idx];
       img.onload = () => {
@@ -590,18 +776,19 @@
         const ctx = canvas.getContext('2d');
         ctx.fillStyle = '#FFFFFF';
         ctx.fillRect(0, 0, canvas.width, canvas.height);
+        
         ctx.imageSmoothingEnabled = true;
         ctx.imageSmoothingQuality = 'high';
+        
         ctx.translate(canvas.width / 2, canvas.height / 2);
         ctx.rotate((90 * Math.PI) / 180);
         ctx.drawImage(img, -img.width / 2, -img.height / 2);
 
-        // Update HD Original array
-        const newHdOriginal = canvas.toDataURL('image/jpeg', 0.95);
-        scannedPagesOriginal[idx] = newHdOriginal;
+        const newOriginal = canvas.toDataURL('image/jpeg', 0.95);
+        scannedPagesOriginal[idx] = newOriginal;
 
-        // Re-generate optimized <100KB version from rotated canvas
-        scannedPagesCompressed[idx] = compressSinglePageTo100KB(canvas);
+        const newCompressed = compressToTargetSize(canvas);
+        scannedPagesCompressed[idx] = newCompressed;
 
         renderPages();
       };
@@ -613,22 +800,20 @@
       renderPages();
     }
 
-    // PDF Generation uses the currently selected data URLs
     function generatePDFBlob() {
       const { jsPDF } = window.jspdf;
       const pdf = new jsPDF({
         orientation: 'portrait',
         unit: 'mm',
         format: 'a4',
-        compress: true // Internal PDF stream compression
+        compress: true
       });
 
       const pages = getActivePages();
 
       pages.forEach((pageData, index) => {
         if (index > 0) pdf.addPage('a4', 'portrait');
-        // 'SLOW' alias uses high quality rendering for the source image in PDF
-        // Even at <100KB, the source image has enough resolution for clear PDF.
+        // Use 'SLOW' alias for high quality image rendering in PDF
         pdf.addImage(pageData, 'JPEG', 0, 0, 210, 297, undefined, 'SLOW');
       });
 
@@ -638,11 +823,10 @@
     function exportPDF() {
       const pages = getActivePages();
       if (!pages.length) return alert('No pages to export!');
-      showToast('Generating PDF...');
       const pdfBlob = generatePDFBlob();
       const link = document.createElement('a');
       link.href = URL.createObjectURL(pdfBlob);
-      link.download = `Scan_${selectedSizeMode}_${new Date().toISOString().slice(0,10)}.pdf`;
+      link.download = `A4_Scan_${selectedSizeMode}_${new Date().toISOString().slice(0,10)}.pdf`;
       link.click();
     }
 
@@ -652,7 +836,7 @@
       pages.forEach((src, index) => {
         const a = document.createElement('a');
         a.href = src;
-        a.download = `SHM_Page_${index + 1}.jpg`;
+        a.download = `A4_Scan_${selectedSizeMode}_Page_${index + 1}.jpg`;
         a.click();
       });
     }
@@ -662,13 +846,15 @@
       if (!pages.length) return alert('No pages to share!');
       try {
         const pdfBlob = generatePDFBlob();
-        const file = new File([pdfBlob], `SHM_Scan.pdf`, { type: 'application/pdf' });
+        const file = new File([pdfBlob], `A4_Scan_${selectedSizeMode}_${Date.now()}.pdf`, { type: 'application/pdf' });
         if (navigator.canShare && navigator.canShare({ files: [file] })) {
-          await navigator.share({ files: [file], title: 'Scanned Document' });
+          await navigator.share({ files: [file], title: 'A4 PDF Document' });
         } else {
-          alert('Native sharing not supported.');
+          alert('Sharing is not supported on this device/browser.');
         }
-      } catch (e) { console.error(e); }
+      } catch (e) {
+        if (e.name !== 'AbortError') console.error(e);
+      }
     }
 
     async function shareJPG() {
@@ -678,15 +864,25 @@
         const files = await Promise.all(
           pages.map(async (dataUrl, idx) => {
             const blob = await (await fetch(dataUrl)).blob();
-            return new File([blob], `SHM_Page_${idx + 1}.jpg`, { type: 'image/jpeg' });
+            return new File([blob], `A4_Scan_${selectedSizeMode}_Pg${idx + 1}.jpg`, { type: 'image/jpeg' });
           })
         );
         if (navigator.canShare && navigator.canShare({ files })) {
-          await navigator.share({ files, title: 'Scanned Images' });
+          await navigator.share({ files, title: 'A4 Scanned JPG' });
         } else {
-          alert('Native sharing not supported.');
+          alert('Sharing is not supported on this device/browser.');
         }
-      } catch (e) { console.error(e); }
+      } catch (e) {
+        if (e.name !== 'AbortError') console.error(e);
+      }
+    }
+  </script>
+  
+  <script>
+    if ('serviceWorker' in navigator) {
+      navigator.serviceWorker.register('sw.js')
+        .then(() => console.log('Service Worker Registered!'))
+        .catch((err) => console.log('Service Worker Failed:', err));
     }
   </script>
 </body>
