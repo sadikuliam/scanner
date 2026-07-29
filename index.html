@@ -3,131 +3,81 @@
 <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
-    <title>SHM Scanner - Pro</title>
+    <title>SHM Scanner Pro</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.5.13/cropper.min.css" />
     <style>
-        :root {
-            --primary: #2563eb; --primary-hover: #1d4ed8;
-            --bg: #f8fafc; --card: #ffffff;
-            --text: #1e293b; --text-dim: #64748b;
-        }
-        * { box-sizing: border-box; margin: 0; padding: 0; }
-        body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; background: var(--bg); color: var(--text); height: 100vh; display: flex; flex-direction: column; overflow: hidden; }
-
-        /* Layout */
-        header { background: rgba(255,255,255,0.8); backdrop-filter: blur(10px); padding: 0.75rem 1rem; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #e2e8f0; }
+        :root { --primary: #2563eb; --whatsapp: #25d366; --bg: #f8fafc; --text: #1e293b; }
+        * { box-sizing: border-box; margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; }
+        body { background: var(--bg); color: var(--text); height: 100vh; display: flex; flex-direction: column; overflow: hidden; }
+        header { background: #fff; padding: 1rem; border-bottom: 1px solid #e2e8f0; display: flex; justify-content: space-between; align-items: center; }
         .step { display: none; flex: 1; overflow-y: auto; padding: 1rem; }
         .step.active { display: flex; flex-direction: column; }
-
-        /* UI Elements */
-        .btn { background: var(--primary); color: white; border: none; padding: 0.8rem 1.5rem; border-radius: 40px; font-weight: 600; cursor: pointer; transition: 0.2s; display: inline-flex; align-items: center; gap: 0.5rem; justify-content: center; }
-        .btn:active { transform: scale(0.95); opacity: 0.9; }
-        .btn-outline { background: transparent; border: 2px solid #cbd5e1; color: var(--text); }
-        .btn-group { display: flex; gap: 0.5rem; margin-top: 1rem; flex-wrap: wrap; justify-content: center; }
-
-        /* New PDF Button Styles */
-        .pdf-btn {
-            display:inline-block;
-            padding:16px 30px;
-            background:linear-gradient(135deg,#007BFF,#00C6FF);
-            color:#fff;
-            text-decoration:none;
-            font-family:Arial,Helvetica,sans-serif;
-            font-size:18px;
-            font-weight:bold;
-            text-align:center;
-            border-radius:14px;
-            box-shadow:0 8px 20px rgba(0,123,255,.35);
-            transition:all .3s ease;
-            letter-spacing:.5px;
-            margin-top: 20px;
-        }
-        .pdf-btn small { display:block; font-size:13px; font-weight:normal; margin-top:5px; opacity:.9; }
-        .pdf-btn:hover { transform:translateY(-4px) scale(1.03); box-shadow:0 14px 28px rgba(0,123,255,.45); background:linear-gradient(135deg,#0056D2,#0099FF); }
-        .pdf-btn:active { transform:scale(.98); }
-
-        /* Loader Overlay */
-        #loader-overlay { display: none; position: fixed; inset: 0; background: rgba(255,255,255,0.9); z-index: 1000; flex-direction: column; align-items: center; justify-content: center; font-weight: bold; }
-        .spinner { width: 40px; height: 40px; border: 4px solid #e2e8f0; border-top: 4px solid var(--primary); border-radius: 50%; animation: spin 1s linear infinite; margin-bottom: 1rem; }
-        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
-
-        /* Editors */
-        .editor-container { flex: 1; background: #e2e8f0; border-radius: 16px; overflow: hidden; position: relative; margin-bottom: 1rem; min-height: 250px; }
-        .editor-container img { max-width: 100%; max-height: 100%; display: block; }
-
-        /* Grid */
-        .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(120px, 1fr)); gap: 1rem; }
-        .page-card { background: var(--card); padding: 0.5rem; border-radius: 12px; border: 1px solid #e2e8f0; display: flex; flex-direction: column; gap: 0.5rem; }
-        .page-img-wrap { aspect-ratio: 1/1.414; background: #f1f5f9; position: relative; border-radius: 8px; overflow: hidden; }
-        .page-img-wrap img { width: 100%; height: 100%; object-fit: contain; }
-
-        /* Badges & Overlays */
-        .toast { position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%); background: #334155; color: white; padding: 10px 20px; border-radius: 30px; z-index: 2000; font-size: 0.9rem; }
-        .badge { font-size: 0.65rem; padding: 2px 6px; border-radius: 4px; background: rgba(0,0,0,0.6); color: white; position: absolute; bottom: 4px; right: 4px; }
+        
+        /* PDF Button Styles */
+        .pdf-btn { display:block; padding:12px 20px; background:linear-gradient(135deg,#007BFF,#00C6FF); color:#fff; text-decoration:none; font-family:Arial,sans-serif; font-size:16px; font-weight:bold; text-align:center; border-radius:12px; box-shadow:0 4px 10px rgba(0,123,255,.2); transition:all .3s ease; margin: 10px; }
+        .pdf-btn small { display:block; font-size:12px; font-weight:normal; margin-top:2px; opacity:.9; }
+        
+        .btn { background: var(--primary); color: white; border: none; padding: 1rem; border-radius: 12px; font-weight: 600; cursor: pointer; transition: 0.2s; display: flex; align-items: center; justify-content: center; gap: 0.5rem; }
+        .btn:active { transform: scale(0.98); }
+        .btn-whatsapp { background: var(--whatsapp); }
+        .btn-outline { background: #fff; border: 2px solid #e2e8f0; color: var(--text); }
+        .btn-group { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin-top: 1rem; }
+        .editor-container { flex: 1; background: #000; border-radius: 12px; overflow: hidden; position: relative; margin-bottom: 1rem; }
+        .grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 1rem; }
+        .page-card { background: #fff; padding: 0.5rem; border-radius: 8px; border: 1px solid #e2e8f0; }
+        #loader-overlay { display: none; position: fixed; inset: 0; background: rgba(255,255,255,0.95); z-index: 1000; flex-direction: column; align-items: center; justify-content: center; font-weight: bold; }
     </style>
 </head>
 <body>
+
     <header>
-        <div style="font-weight: 800; font-size: 1.1rem;">📄 SHM Scanner</div>
-        <button class="btn" style="padding: 0.4rem 1rem; font-size: 0.8rem;" onclick="location.reload()">Reset</button>
+        <div style="font-weight: 800;">📄 SHM Scanner Pro</div>
+        <button class="btn" style="padding: 0.5rem 1rem; font-size: 0.8rem;" onclick="location.reload()">Reset</button>
     </header>
 
-    <div id="loader-overlay"><div class="spinner"></div><div id="loader-text">Processing...</div></div>
+    <!-- Top Action Section -->
+    <a href="compress.html" class="pdf-btn">
+        📄 Split & Compress PDF
+        <small>Target: Within 180 KB</small>
+    </a>
+
+    <div id="loader-overlay"><div class="spinner" style="width:40px; height:40px; border:4px solid #ddd; border-top:4px solid var(--primary); border-radius:50%; animation: spin 1s linear infinite; margin-bottom:1rem;"></div><div id="loader-text">Processing...</div></div>
 
     <!-- Step 1: Capture -->
     <div id="step-1" class="step active">
-        <div style="flex:1; display:flex; flex-direction:column; align-items:center; justify-content:center; gap: 1rem;">
-            <h2>Capture Documents</h2>
-            <div class="btn-group">
-                <label class="btn">📸 Camera<input type="file" accept="image/*" capture="environment" style="display:none;" onchange="handleFile(event)"></label>
-                <label class="btn btn-outline">🖼️ Import<input type="file" accept="image/*" style="display:none;" onchange="handleFile(event)"></label>
-            </div>
-            
-            <!-- Stylish PDF Button Added Here -->
-            <a href="compress.html" class="pdf-btn">
-                📄 Split & Compress PDF<br>
-                <small>Within 180 KB</small>
-            </a>
+        <div style="flex:1; display:flex; flex-direction:column; align-items:center; justify-content:center; gap: 1.5rem;">
+            <label class="btn" style="width: 100%; padding: 2rem;">📸 Capture Page<input type="file" accept="image/*" capture="environment" style="display:none;" onchange="handleFile(event)"></label>
+            <label class="btn btn-outline" style="width: 100%;">🖼️ Import from Gallery<input type="file" accept="image/*" style="display:none;" onchange="handleFile(event)"></label>
         </div>
     </div>
 
-    <!-- Step 2: Edit/Crop -->
+    <!-- Step 2: Edit -->
     <div id="step-2" class="step">
         <div class="editor-container"><img id="editor-image" /></div>
         <div class="btn-group">
             <button class="btn btn-outline" onclick="goToStep(1)">Cancel</button>
-            <button class="btn" onclick="savePage(false)">+ Save & Next</button>
-            <button class="btn" style="background:var(--primary)" onclick="savePage(true)">✔ Finish</button>
+            <button class="btn" onclick="savePage()">Save Page</button>
         </div>
     </div>
 
     <!-- Step 3: Preview -->
     <div id="step-3" class="step">
         <div class="grid" id="pages-grid"></div>
-        <div class="btn-group">
-            <button class="btn btn-outline" onclick="goToStep(1)">+ Add Page</button>
-            <button class="btn" onclick="exportDoc('pdf')">Download PDF</button>
+        <div style="margin-top:auto; display:flex; flex-direction:column; gap:10px;">
+            <button class="btn btn-outline" onclick="goToStep(1)">+ Add More</button>
+            <div class="btn-group" style="margin-top:0;">
+                <button class="btn" style="background: #059669;" onclick="exportPDF()">Download</button>
+                <button class="btn btn-whatsapp" onclick="sharePDF()">WhatsApp ✈️</button>
+            </div>
         </div>
     </div>
-
-    <div id="toast" class="toast" style="display:none;"></div>
 
     <script src="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.5.13/cropper.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
     <script>
-        let pages = []; 
-        let cropper = null;
+        let pages = []; let cropper = null;
         const editorImg = document.getElementById('editor-image');
-        const loader = document.getElementById('loader-overlay');
-
-        function showLoader(text) { loader.style.display = 'flex'; document.getElementById('loader-text').innerText = text; }
-        function hideLoader() { loader.style.display = 'none'; }
-        function showToast(msg) {
-            const t = document.getElementById('toast');
-            t.innerText = msg; t.style.display = 'block';
-            setTimeout(() => t.style.display = 'none', 2000);
-        }
-
+        
         function goToStep(s) {
             document.querySelectorAll('.step').forEach(el => el.classList.remove('active'));
             document.getElementById('step-'+s).classList.add('active');
@@ -141,75 +91,57 @@
             reader.onload = (ev) => {
                 editorImg.src = ev.target.result;
                 goToStep(2);
-                initCropper();
+                if(cropper) cropper.destroy();
+                cropper = new Cropper(editorImg, { aspectRatio: 1/1.414, viewMode: 1 });
             };
             reader.readAsDataURL(file);
         }
 
-        function initCropper() {
-            if(cropper) cropper.destroy();
-            cropper = new Cropper(editorImg, {
-                aspectRatio: NaN, viewMode: 1, autoCropArea: 0.9,
-            });
-        }
-
-        async function compressImage(dataUrl, quality = 0.6) {
-            return new Promise(resolve => {
-                const img = new Image();
-                img.onload = () => {
-                    const canvas = document.createElement('canvas');
-                    const max = 1500;
-                    let w = img.width, h = img.height;
-                    if(w > max) { h *= (max/w); w = max; }
-                    canvas.width = w; canvas.height = h;
-                    const ctx = canvas.getContext('2d');
-                    ctx.drawImage(img, 0, 0, w, h);
-                    resolve(canvas.toDataURL('image/jpeg', quality));
-                };
-                img.src = dataUrl;
-            });
-        }
-
-        async function savePage(finish) {
-            showLoader("Processing page...");
-            const canvas = cropper.getCroppedCanvas();
-            const original = canvas.toDataURL('image/jpeg', 0.9);
-            const compressed = await compressImage(original, 0.5);
-            pages.push({ original, compressed });
-            showToast("Page Saved");
-            hideLoader();
-            finish ? goToStep(3) : goToStep(1);
+        async function savePage() {
+            document.getElementById('loader-overlay').style.display = 'flex';
+            const canvas = cropper.getCroppedCanvas({ width: 1200 });
+            const quality = Math.max(0.2, 0.6 - (pages.length * 0.1));
+            pages.push(canvas.toDataURL('image/jpeg', quality));
+            document.getElementById('loader-overlay').style.display = 'none';
+            goToStep(3);
         }
 
         function renderGrid() {
             const grid = document.getElementById('pages-grid');
             grid.innerHTML = '';
             pages.forEach((p, i) => {
-                const div = document.createElement('div');
-                div.className = 'page-card';
-                div.innerHTML = `
-                    <div class="page-img-wrap"><img src="${p.compressed}">
-                    <span class="badge">Pg ${i+1}</span></div>
-                    <button class="btn btn-outline" style="padding:0.2rem; font-size:0.7rem;" onclick="removePage(${i})">Remove</button>
-                `;
-                grid.appendChild(div);
+                grid.innerHTML += `<div class="page-card"><img src="${p}" style="width:100%"><button onclick="pages.splice(${i},1); renderGrid()" style="width:100%; margin-top:5px;">Remove</button></div>`;
             });
         }
 
-        function removePage(i) { pages.splice(i, 1); renderGrid(); }
-        
-        async function exportDoc(type) {
-            if(pages.length === 0) return;
-            showLoader("Generating PDF...");
+        function generatePdfBlob() {
             const { jsPDF } = window.jspdf;
             const pdf = new jsPDF('p', 'mm', 'a4');
-            for(let i=0; i<pages.length; i++) {
+            pages.forEach((p, i) => {
                 if(i > 0) pdf.addPage();
-                pdf.addImage(pages[i].compressed, 'JPEG', 0, 0, 210, 297);
+                pdf.addImage(p, 'JPEG', 10, 10, 190, 277);
+            });
+            return pdf.output('blob');
+        }
+
+        async function exportPDF() {
+            const blob = generatePdfBlob();
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url; a.download = "document.pdf"; a.click();
+        }
+
+        async function sharePDF() {
+            const blob = generatePdfBlob();
+            const file = new File([blob], "document.pdf", { type: "application/pdf" });
+            if (navigator.canShare && navigator.canShare({ files: [file] })) {
+                await navigator.share({ files: [file], title: 'SHM Scan', text: 'Document scan' });
+            } else {
+                alert("Sharing not supported on this browser.");
+                exportPDF();
             }
-            pdf.save("document.pdf");
-            hideLoader();
         }
     </script>
+    <style>@keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }</style>
 </body>
 </html>
