@@ -515,25 +515,47 @@
         <button class="header-install-btn" onclick="openInstallPrompt()">📲 Install</button>
     </header>
 
-    <!-- STEP 1: CAPTURE -->
-    <div id="step-1" class="step active">
-        <div class="capture-container">
-            <div class="icon-big">📷</div>
-            <h2>Scan Document</h2>
-            <p>Take a photo or choose an existing image. We'll automatically detect the document edges.</p>
-            <div class="btn-group">
-                <label class="btn">
-                    📸 Camera
-                    <input type="file" id="system-camera-input" accept="image/*" capture="environment" style="display:none;" />
-                </label>
-                <label class="btn btn-outline">
-                    🖼️ Gallery
-                    <input type="file" id="file-input" accept="image/*" style="display:none;" />
-                </label>
-            </div>
-            <div class="page-count-badge">📦 <span id="page-count-display">0</span> pages scanned</div>
+   <!-- STEP 1: CAPTURE -->
+<div id="step-1" class="step active">
+    <div class="capture-container">
+
+        <h3>Take High Quality Document Photos</h3>
+
+        <p style="color: var(--text-dim); max-width:300px;">
+            Use your camera to scan documents or choose an existing photo from your gallery.
+        </p>
+
+        <!-- Simple Link -->
+        <p>
+            <a href="compress.html"
+               style="text-decoration:none; color:#0066cc; font-weight:bold; font-size:16px;">
+                Split &amp; Compress PDF (Within 180 KB)
+            </a>
+        </p>
+
+        <div class="btn-group">
+
+            <label class="btn-label">
+                📸 Open Camera
+                <input type="file"
+                       id="system-camera-input"
+                       accept="image/*"
+                       capture="environment"
+                       style="display:none;">
+            </label>
+
+            <label class="btn-label secondary">
+                🖼️ Import from Gallery
+                <input type="file"
+                       id="file-input"
+                       accept="image/*"
+                       style="display:none;">
+            </label>
+
         </div>
+
     </div>
+</div>
 
     <!-- STEP 2: CROPPER -->
     <div id="step-2" class="step">
