@@ -620,6 +620,7 @@
         // ─── CONSTANTS ─────────────────────────────────────────────
         const A4_ASPECT = 210 / 297;
         const TARGET_BYTES = 99 * 1024;
+        const SHARE_TARGET_BYTES = 90 * 1024; // 90 KB for sharing to account for WhatsApp overhead
         const QUALITY_FLOOR = 0.08;
         const QUALITY_STEP = 0.04;
         const MIN_DIM = 300;
@@ -931,7 +932,7 @@
             return `${Math.round(kb)} KB`;
         }
 
-        // ─── Robust compressor: ensures ≤ targetBytes ────────────
+        // ─── Robust compressor with dynamic target ──────────────
         function compressImageToSize(sourceCanvas, targetBytes) {
             let maxDim = MAX_DIM_START;
             let bestDataUrl = null;
@@ -1028,53 +1029,10 @@
             goToStep(3);
         });
 
-        // ─── Get active pages (with re‑compression if needed) ────
+        // ─── Get active pages ──────────────────────────────────────
         function getActivePages() {
             if (selectedSizeMode === 'compressed') {
-                // Ensure each compressed page is under 99 KB
-                const result = [];
-                for (let i = 0; i < scannedPagesCompressed.length; i++) {
-                    const dataUrl = scannedPagesCompressed[i];
-                    if (getByteSize(dataUrl) <= TARGET_BYTES) {
-                        result.push(dataUrl);
-                    } else {
-                        // Re-compress from original
-                        const orig = scannedPagesOriginal[i];
-                        // Load original image to canvas
-                        const img = new Image();
-                        img.src = orig;
-                        // We need to do this synchronously; we'll use a canvas
-                        const canvas = document.createElement('canvas');
-                        const ctx = canvas.getContext('2d');
-                        img.onload = function() {
-                            canvas.width = img.width;
-                            canvas.height = img.height;
-                            ctx.drawImage(img, 0, 0);
-                            const newComp = compressToTarget(canvas);
-                            scannedPagesCompressed[i] = newComp;
-                            result.push(newComp);
-                        };
-                        // But this is async; we need to handle properly
-                        // For simplicity, we'll force a synchronous version using a temporary image
-                        // Actually we'll just use the existing compression function again on the original canvas
-                        // But we don't have the canvas directly. We'll create one from the dataUrl.
-                        // Since this is called during render and share, we need a synchronous way.
-                        // We'll use a helper to convert dataUrl to canvas synchronously (blocking)
-                        // We'll use a temporary image and draw it, but it's async.
-                        // Better: we'll store the original canvas in a separate array or re-compress on the fly.
-                        // Let's just store the original canvas when saving.
-                        // We'll modify save to also store the canvas.
-                        // For now, we'll re-compress using a synchronous approach: load image, draw, compress.
-                        // Since this is a quick fix, we'll use a synchronous XMLHttpRequest? Not possible.
-                        // We'll use a workaround: if a page is over, we'll re-compress using the original dataUrl
-                        // by loading it into a canvas using createImageBitmap (async) or Image (async).
-                        // However, the user expects immediate sharing, so we need to ensure that before share we recompress.
-                        // We'll do this in the share functions themselves.
-                        // So we'll not rely on this getActivePages for compression, but we'll recompress on share/export.
-                        result.push(dataUrl); // fallback
-                    }
-                }
-                return result;
+                return scannedPagesCompressed;
             } else {
                 return scannedPagesOriginal;
             }
@@ -1185,27 +1143,12 @@
             });
         }
 
-        // ─── Ensure image is under target (recompress if needed) ──
-        async function ensureImageUnderTarget(dataUrl) {
-            const bytes = getByteSize(dataUrl);
-            if (bytes <= TARGET_BYTES) return dataUrl;
-            // Recompress from original if we have it, or just compress the dataUrl
-            // We'll load it to canvas and compress
-            try {
-                const canvas = await loadImageToCanvas(dataUrl);
-                return compressImageToSize(canvas, TARGET_BYTES);
-            } catch (e) {
-                console.error('Recompress failed:', e);
-                return dataUrl; // fallback
-            }
-        }
-
-        // ─── Generate PDF with guaranteed size ────────────────────
-        async function generatePDFBlobUnderTarget() {
+        // ─── Generate PDF with target size ────────────────────────
+        async function generatePDFBlob(targetBytes) {
             if (!scannedPagesOriginal.length) return null;
             const { jsPDF } = window.jspdf;
 
-            // Determine which images to use
+            // Use compressed images if mode is compressed, else original
             let imageDataUrls;
             if (selectedSizeMode === 'compressed') {
                 imageDataUrls = scannedPagesCompressed.slice();
@@ -1213,7 +1156,29 @@
                 imageDataUrls = scannedPagesOriginal.slice();
             }
 
-            // Function to build PDF from image array
+            // Ensure each image is under target (per page)
+            const pageCount = imageDataUrls.length;
+            if (selectedSizeMode === 'compressed') {
+                const ensured = [];
+                for (let i = 0; i < pageCount; i++) {
+                    const img = imageDataUrls[i];
+                    const bytes = getByteSize(img);
+                    if (bytes <= targetBytes) {
+                        ensured.push(img);
+                    } else {
+                        try {
+                            const origCanvas = await loadImageToCanvas(scannedPagesOriginal[i]);
+                            const newComp = compressImageToSize(origCanvas, targetBytes);
+                            ensured.push(newComp);
+                            scannedPagesCompressed[i] = newComp;
+                        } catch (e) {
+                            ensured.push(img);
+                        }
+                    }
+                }
+                imageDataUrls = ensured;
+            }
+
             function buildPDF(images) {
                 const pdf = new jsPDF({ orientation: 'portrait', unit: 'mm', format: 'a4', compress: true });
                 images.forEach((data, i) => {
@@ -1223,52 +1188,22 @@
                 return pdf.output('blob');
             }
 
-            // If we are in compressed mode, we need to ensure each image is under target
-            if (selectedSizeMode === 'compressed') {
-                // Ensure each image is under 99 KB
-                const ensured = [];
-                for (let i = 0; i < imageDataUrls.length; i++) {
-                    const img = imageDataUrls[i];
-                    const bytes = getByteSize(img);
-                    if (bytes <= TARGET_BYTES) {
-                        ensured.push(img);
-                    } else {
-                        // Recompress from original
-                        try {
-                            const origCanvas = await loadImageToCanvas(scannedPagesOriginal[i]);
-                            const newComp = compressImageToSize(origCanvas, TARGET_BYTES);
-                            ensured.push(newComp);
-                            // Update stored compressed
-                            scannedPagesCompressed[i] = newComp;
-                        } catch (e) {
-                            console.error('Failed to recompress page', i, e);
-                            ensured.push(img); // fallback
-                        }
-                    }
-                }
-                imageDataUrls = ensured;
-            }
-
-            // Build initial PDF
             let pdfBlob = buildPDF(imageDataUrls);
             let size = pdfBlob.size;
 
-            // If under target or in HD mode (no size guarantee), return
-            if (size <= TARGET_BYTES || selectedSizeMode === 'original') {
+            // If we're in HD mode or size already under target, return
+            if (selectedSizeMode === 'original' || size <= targetBytes) {
                 return pdfBlob;
             }
 
-            // If over target in compressed mode, we need to recompress pages more aggressively
-            // We'll use an adaptive loop: reduce target per page and rebuild
-            const pageCount = imageDataUrls.length;
-            let perPageTarget = Math.floor((TARGET_BYTES - 2048) / pageCount);
+            // Otherwise, recompress more aggressively
+            let perPageTarget = Math.floor((targetBytes - 2048) / pageCount);
             let attempts = 0;
             const MAX_ATTEMPTS = 8;
 
-            while (attempts < MAX_ATTEMPTS && size > TARGET_BYTES) {
-                // Reduce per page target
+            while (attempts < MAX_ATTEMPTS && size > targetBytes) {
                 perPageTarget = Math.floor(perPageTarget * 0.85);
-                if (perPageTarget < 3000) perPageTarget = 3000; // floor
+                if (perPageTarget < 3000) perPageTarget = 3000;
 
                 const newImages = [];
                 let allGood = true;
@@ -1280,7 +1215,7 @@
                         if (getByteSize(compressed) > perPageTarget) allGood = false;
                     } catch (e) {
                         allGood = false;
-                        newImages.push(imageDataUrls[i]); // fallback
+                        newImages.push(imageDataUrls[i]);
                     }
                 }
                 if (!allGood) {
@@ -1307,7 +1242,8 @@
             }
             showToast('⏳ Generating PDF…', 3000);
             try {
-                const blob = await generatePDFBlobUnderTarget();
+                const target = selectedSizeMode === 'compressed' ? TARGET_BYTES : Infinity;
+                const blob = await generatePDFBlob(target);
                 if (!blob) throw new Error('PDF generation failed');
                 const size = blob.size;
                 if (selectedSizeMode === 'compressed' && size > TARGET_BYTES) {
@@ -1322,7 +1258,7 @@
                 link.click();
                 document.body.removeChild(link);
                 setTimeout(() => URL.revokeObjectURL(link.href), 10000);
-                renderPages(); // update sizes
+                renderPages();
             } catch (e) {
                 console.error('PDF export error:', e);
                 showToast('❌ Failed to generate PDF: ' + e.message, 4000);
@@ -1335,7 +1271,6 @@
                 showToast('❌ No pages to export.', 2500);
                 return;
             }
-            // Ensure each image is under target if in compressed mode
             let exportPages = pages;
             if (selectedSizeMode === 'compressed') {
                 const ensured = [];
@@ -1370,18 +1305,33 @@
             renderPages();
         }
 
+        // ─── Share functions with 90 KB target ────────────────────
         async function sharePDF() {
             if (!scannedPagesOriginal.length) {
                 showToast('❌ No pages to share.', 2500);
                 return;
             }
-            showToast('⏳ Preparing PDF for sharing…', 3000);
+            showToast('⏳ Preparing PDF for sharing (≤90 KB)…', 3000);
             try {
-                const blob = await generatePDFBlobUnderTarget();
+                // Force compressed mode for share to ensure small size
+                const originalMode = selectedSizeMode;
+                const shareTarget = SHARE_TARGET_BYTES;
+                // Temporarily switch mode to compressed for generation
+                const wasCompressed = selectedSizeMode === 'compressed';
+                if (!wasCompressed) {
+                    selectedSizeMode = 'compressed';
+                }
+                const blob = await generatePDFBlob(shareTarget);
+                // Restore mode
+                if (!wasCompressed) {
+                    selectedSizeMode = originalMode;
+                }
                 if (!blob) throw new Error('PDF generation failed');
                 const size = blob.size;
-                if (selectedSizeMode === 'compressed' && size > TARGET_BYTES) {
-                    showToast(`⚠️ PDF is ${formatBytes(size)} — exceeds 99 KB. Try reducing pages.`, 4000);
+                if (size > shareTarget) {
+                    showToast(`⚠️ PDF is ${formatBytes(size)} — still exceeds 90 KB.`, 4000);
+                } else {
+                    showToast(`✅ PDF ready: ${formatBytes(size)}`, 2000);
                 }
                 const file = new File([blob], `Scan_${Date.now()}.pdf`, { type: 'application/pdf' });
 
@@ -1410,7 +1360,7 @@
                     showToast('❌ Failed to share PDF: ' + e.message, 4000);
                     // Fallback download
                     try {
-                        const blob = await generatePDFBlobUnderTarget();
+                        const blob = await generatePDFBlob(SHARE_TARGET_BYTES);
                         if (blob) {
                             const link = document.createElement('a');
                             link.href = URL.createObjectURL(blob);
@@ -1434,33 +1384,31 @@
                 return;
             }
             try {
-                // Ensure each image is under target if in compressed mode
-                let exportPages = pages;
-                if (selectedSizeMode === 'compressed') {
-                    const ensured = [];
-                    for (let i = 0; i < pages.length; i++) {
-                        const img = pages[i];
-                        const bytes = getByteSize(img);
-                        if (bytes <= TARGET_BYTES) {
+                // Compress each image to 90 KB for sharing
+                const shareTarget = SHARE_TARGET_BYTES;
+                const ensured = [];
+                for (let i = 0; i < pages.length; i++) {
+                    const img = pages[i];
+                    const bytes = getByteSize(img);
+                    if (bytes <= shareTarget) {
+                        ensured.push(img);
+                    } else {
+                        try {
+                            const origCanvas = await loadImageToCanvas(scannedPagesOriginal[i]);
+                            const newComp = compressImageToSize(origCanvas, shareTarget);
+                            ensured.push(newComp);
+                            // Optionally update stored compressed if we want to keep smaller version
+                            // But we keep 99KB for download, so we don't update scannedPagesCompressed
+                        } catch (e) {
                             ensured.push(img);
-                        } else {
-                            try {
-                                const origCanvas = await loadImageToCanvas(scannedPagesOriginal[i]);
-                                const newComp = compressImageToSize(origCanvas, TARGET_BYTES);
-                                ensured.push(newComp);
-                                scannedPagesCompressed[i] = newComp;
-                            } catch (e) {
-                                ensured.push(img);
-                            }
                         }
                     }
-                    exportPages = ensured;
                 }
 
-                const files = await Promise.all(exportPages.map(async (dataUrl, idx) => {
+                const files = await Promise.all(ensured.map(async (dataUrl, idx) => {
                     const response = await fetch(dataUrl);
                     const blob = await response.blob();
-                    const label = selectedSizeMode === 'compressed' ? '99KB' : 'HD';
+                    const label = '99KB'; // always 99KB mode for share
                     return new File([blob], `Scan_${label}_Pg${idx+1}.jpg`, { type: 'image/jpeg' });
                 }));
 
@@ -1490,7 +1438,9 @@
                     showToast('❌ Failed to share JPGs: ' + e.message, 4000);
                     // Fallback: download individually
                     try {
-                        exportPages.forEach((src, idx) => {
+                        // Re-use ensured pages
+                        const fallbackPages = ensured || pages;
+                        fallbackPages.forEach((src, idx) => {
                             const link = document.createElement('a');
                             link.href = src;
                             link.download = `Scan_Pg${idx+1}.jpg`;
@@ -1525,7 +1475,7 @@
                 .then(() => console.log('SW registered'))
                 .catch(() => console.log('SW skip'));
         }
-        console.log('📄 SHM Scanner · 99KB guarantee enforced on every export/share.');
+        console.log('📄 SHM Scanner · Share uses 90 KB target to keep WhatsApp happy.');
     </script>
 </body>
 </html>
