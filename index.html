@@ -463,13 +463,13 @@
       <span class="size-mode-title">Select Output File Size Target:</span>
       <div class="mode-toggle-group">
         <button id="mode-100kb" class="mode-btn active-mode" onclick="setSizeMode('compressed')">
-          ⚡ Compressed (&lt;100KB/page)
+          ⚡ Compressed (&lt;99KB/page)
         </button>
         <button id="mode-original" class="mode-btn" onclick="setSizeMode('original')">
           💎 Original HD Quality
         </button>
       </div>
-      <span class="size-mode-sub" id="size-mode-sub-text">Each page is auto-optimized to stay under 100 KB.</span>
+      <span class="size-mode-sub" id="size-mode-sub-text">Each page is auto-optimized to stay within 99 KB.</span>
     </div>
 
     <div id="pages-grid" class="grid"></div>
@@ -509,7 +509,7 @@
 
     // Hard cap for the "compressed" mode. Every page in that mode must land
     // at or under this many bytes.
-    const COMPRESSED_TARGET_BYTES = 100 * 1024; // 100 KB
+    const COMPRESSED_TARGET_BYTES = 99 * 1024; // 99 KB
 
     let scannedPagesOriginal = [];
     let scannedPagesCompressed = [];
@@ -584,7 +584,7 @@
       document.getElementById('mode-100kb').classList.toggle('active-mode', mode === 'compressed');
       document.getElementById('mode-original').classList.toggle('active-mode', mode === 'original');
       document.getElementById('size-mode-sub-text').innerText = mode === 'compressed'
-        ? 'Each page is auto-optimized to stay under 100 KB.'
+        ? 'Each page is auto-optimized to stay within 99 KB.'
         : 'Full resolution, minimal compression — larger file sizes.';
       renderPages();
     }
@@ -710,10 +710,16 @@
     // resolution and try again. Repeat until it fits or we hit a sane
     // minimum resolution (so text doesn't become unreadable).
     function compressToTargetSize(sourceCanvas, targetSizeBytes = COMPRESSED_TARGET_BYTES) {
-      const QUALITY_FLOOR = 0.3;
-      const QUALITY_STEP = 0.05;
-      const MIN_DIM = 500; // don't shrink below this or text becomes unreadable
-      const DIM_STEP = 150;
+      // Aim a bit below the real target so rounding / re-encoding never
+      // pushes the final file over the limit (this is what was causing
+      // ~103KB results against a 100KB target before).
+      const SAFETY_MARGIN_BYTES = 3 * 1024;
+      const SAFETY_TARGET_BYTES = targetSizeBytes - SAFETY_MARGIN_BYTES;
+
+      const QUALITY_FLOOR = 0.15;
+      const QUALITY_STEP = 0.03;   // finer steps = less overshoot per iteration
+      const MIN_DIM = 350;         // don't shrink below this or text becomes unreadable
+      const DIM_STEP = 80;         // finer resolution steps too
 
       let maxDim = 1400;
       let bestDataUrl = null;
@@ -749,7 +755,9 @@
         let dataUrl = tempCanvas.toDataURL('image/jpeg', quality);
         let size = getByteSize(dataUrl);
 
-        while (size > targetSizeBytes && quality > QUALITY_FLOOR) {
+        // Push quality down until we're under the safety-margined target,
+        // not just the raw target — this is what eliminates the overshoot.
+        while (size > SAFETY_TARGET_BYTES && quality > QUALITY_FLOOR) {
           quality -= QUALITY_STEP;
           dataUrl = tempCanvas.toDataURL('image/jpeg', quality);
           size = getByteSize(dataUrl);
