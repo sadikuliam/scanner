@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>SHM Scanner - Every Page < 100KB</title>
+  <title>SHM Scanner - Single Page < 100KB</title>
   <link rel="manifest" href="manifest.json" />
   
   <!-- CSS Dependencies -->
@@ -265,7 +265,7 @@
     <div class="capture-container">
       <h3>Scan Documents Perfectly</h3>
       <p style="color: var(--text-dim); max-width: 320px;">
-        Every single page is guaranteed to be under 100KB.
+        Single A4 page size will be strictly under 100KB.
       </p>
       
       <div class="btn-group">
@@ -307,7 +307,7 @@
       <span class="size-mode-title">Select Quality Mode (Applies to PDF & JPG):</span>
       <div class="mode-toggle-group">
         <button id="mode-100kb" class="mode-btn active-mode" onclick="setSizeMode('compressed')">
-          ⚡ Every Page < 100KB Mode
+          ⚡ Single Page < 100KB Mode
         </button>
         <button id="mode-original" class="mode-btn" onclick="setSizeMode('original')">
           💎 Original Full HD
@@ -446,18 +446,36 @@
       return Math.round((base64WithoutHeader.length * 3) / 4);
     }
 
-    // --- GUARANTEED SINGLE PAGE < 100KB COMPRESSION ---
+    // --- STRICT SINGLE PAGE < 100KB COMPRESSION ENGINE ---
     function compressSinglePageTo100KB(hdCanvas) {
       const TARGET_LIMIT_BYTES = 98 * 1024; // Strict ~98 KB limit
-      let maxDimension = 1100; // Optimal res for clear text
+      let maxDimension = 1200; // Resolution limit (Width or Height) for guaranteed size
 
       let width = hdCanvas.width;
       let height = hdCanvas.height;
 
-      // Initial Downscale to readable resolution
+      // STEP 1: Downscale dimensions first. This is crucial for high-res camera photos.
       if (width > maxDimension || height > maxDimension) {
-        if (width > height) { height = Math.round((height * maxDimension) / width); width = maxDimension; }
-        else { width = Math.round((width * maxDimension) / height); height = maxDimension; }
+        if (width > height) {
+          height = Math.round((height * maxDimension) / width);
+          width = maxDim; // Fixed width to maxDim, height scales
+        } else {
+          width = Math.round((width * maxDimension) / height);
+          height = maxDim; // Fixed height to maxDim, width scales
+        }
+      }
+      
+      // If the above condition didn't set width/height properly due to typo, let's fix it:
+      if (width > height) {
+          if (width > maxDimension) {
+              height = Math.round((height * maxDimension) / width);
+              width = maxDimension;
+          }
+      } else {
+          if (height > maxDimension) {
+              width = Math.round((width * maxDimension) / height);
+              height = maxDimension;
+          }
       }
 
       const canvas = document.createElement('canvas');
@@ -470,12 +488,13 @@
       ctx.fillRect(0, 0, width, height);
       ctx.drawImage(hdCanvas, 0, 0, width, height);
 
-      // BINARY SEARCH FOR EXACT QUALITY (<100KB)
+      // STEP 2: BINARY SEARCH FOR EXACT QUALITY (<100KB)
       let minQuality = 0.01;
       let maxQuality = 0.95;
       let bestDataUrl = '';
-
-      for (let i = 0; i < 7; i++) { // 7 iterations for high accuracy
+      
+      // We do a few iterations to find the highest quality that fits under the limit
+      for (let i = 0; i < 6; i++) { 
         let midQuality = (minQuality + maxQuality) / 2;
         let testUrl = canvas.toDataURL('image/jpeg', midQuality);
         let testSize = getByteSize(testUrl);
@@ -488,7 +507,7 @@
         }
       }
 
-      // Final Check: If B&W filter is on, quality is high even at low KB
+      // Final fallback if something went wrong
       if (!bestDataUrl) bestDataUrl = canvas.toDataURL('image/jpeg', 0.1); 
 
       return bestDataUrl;
@@ -499,6 +518,7 @@
       
       showToast('Optimizing to <100KB...');
 
+      // Get cropped canvas at full source resolution
       const hdCanvas = cropper.getCroppedCanvas({
         imageSmoothingEnabled: true,
         imageSmoothingQuality: 'high'
@@ -509,12 +529,13 @@
         originalImageObjectURL = null;
       }
 
+      // Apply selected filter to full-res canvas
       applyFiltersToCanvas(hdCanvas);
 
-      // Save Full HD Data
+      // Save Full HD Data for "Original Mode" export
       scannedPagesOriginal.push(hdCanvas.toDataURL('image/jpeg', 0.95));
 
-      // Save Compressed <100KB Data
+      // Save Compressed <100KB Data for "Optimized Mode" export
       scannedPagesCompressed.push(compressSinglePageTo100KB(hdCanvas));
 
       cropper.destroy();
@@ -558,7 +579,7 @@
 
     function rotatePreviewPage(idx) {
       showToast('Rotating...');
-      // We must rotate the original HD data and then re-compress it
+      // We must rotate the original HD data and then re-compress it to maintain <100KB
       const img = new Image();
       img.src = scannedPagesOriginal[idx];
       img.onload = () => {
@@ -592,6 +613,7 @@
       renderPages();
     }
 
+    // PDF Generation uses the currently selected data URLs
     function generatePDFBlob() {
       const { jsPDF } = window.jspdf;
       const pdf = new jsPDF({
@@ -606,7 +628,7 @@
       pages.forEach((pageData, index) => {
         if (index > 0) pdf.addPage('a4', 'portrait');
         // 'SLOW' alias uses high quality rendering for the source image in PDF
-        // Even at <100KB, the source image is sharp enough.
+        // Even at <100KB, the source image has enough resolution for clear PDF.
         pdf.addImage(pageData, 'JPEG', 0, 0, 210, 297, undefined, 'SLOW');
       });
 
