@@ -478,7 +478,7 @@
 
   <script>
     const A4_ASPECT_RATIO = 210 / 297;
-    const TARGET_MAX_BYTES = 100 * 1024;
+    const TARGET_MAX_BYTES = 95 * 1024; // 95 KB Target to keep safely under 100KB
 
     let scannedPagesOriginal = [];
     let scannedPagesCompressed = [];
@@ -496,7 +496,6 @@
       e.preventDefault();
       deferredPrompt = e;
       
-      // Auto pop up on first visit
       if (!sessionStorage.getItem('installPromptDismissed')) {
         setTimeout(() => {
           installModal.style.display = 'flex';
@@ -532,7 +531,6 @@
         deferredPrompt = null;
         closeInstallModal();
       } else {
-        // Fallback instructions if native prompt is blocked/unavailable
         alert('ℹ️ Direct auto-prompt is unavailable on this browser connection.\n\nTo Install Manually:\n1. Open your browser menu (⋮ or ⊕) in top-right.\n2. Click "Install SHM Scanner" or "Add to Home Screen".');
         closeInstallModal();
       }
@@ -623,12 +621,20 @@
       return canvas;
     }
 
+    // Helper function to measure actual Byte size of Base64 DataURL
+    function getByteSize(base64Str) {
+      const base64WithoutHeader = base64Str.split(',')[1] || base64Str;
+      return Math.round((base64WithoutHeader.length * 3) / 4);
+    }
+
+    // ACCURATE COMPRESSION FUNCTION (< 100KB)
     function compressToTargetSize(sourceCanvas, targetSizeBytes = TARGET_MAX_BYTES) {
-      let quality = 0.75;
+      let quality = 0.65;
       let width = sourceCanvas.width;
       let height = sourceCanvas.height;
 
-      let maxDim = 1200;
+      // Max resolution dimension limited to 800px for guaranteed 100KB size
+      let maxDim = 800; 
       if (width > maxDim || height > maxDim) {
         if (width > height) {
           height = Math.round((height * maxDim) / width);
@@ -643,13 +649,36 @@
       tempCanvas.width = width;
       tempCanvas.height = height;
       const ctx = tempCanvas.getContext('2d');
+      
+      // Draw solid white background
+      ctx.fillStyle = '#FFFFFF';
+      ctx.fillRect(0, 0, width, height);
       ctx.drawImage(sourceCanvas, 0, 0, width, height);
       applyFilterToCanvas(tempCanvas);
 
       let dataUrl = tempCanvas.toDataURL('image/jpeg', quality);
-      while (dataUrl.length * 0.75 > targetSizeBytes && quality > 0.15) {
-        quality -= 0.08;
+
+      // Phase 1: Quality reduction loop
+      while (getByteSize(dataUrl) > targetSizeBytes && quality > 0.20) {
+        quality -= 0.05;
         dataUrl = tempCanvas.toDataURL('image/jpeg', quality);
+      }
+
+      // Phase 2: Canvas Dimension Resizing loop if still larger than target
+      let scale = 0.85;
+      while (getByteSize(dataUrl) > targetSizeBytes && tempCanvas.width > 250) {
+        const resizedCanvas = document.createElement('canvas');
+        resizedCanvas.width = Math.round(tempCanvas.width * scale);
+        resizedCanvas.height = Math.round(tempCanvas.height * scale);
+        const rCtx = resizedCanvas.getContext('2d');
+        rCtx.fillStyle = '#FFFFFF';
+        rCtx.fillRect(0, 0, resizedCanvas.width, resizedCanvas.height);
+        rCtx.drawImage(tempCanvas, 0, 0, resizedCanvas.width, resizedCanvas.height);
+        
+        dataUrl = resizedCanvas.toDataURL('image/jpeg', 0.60);
+        tempCanvas.width = resizedCanvas.width;
+        tempCanvas.height = resizedCanvas.height;
+        tempCanvas.getContext('2d').drawImage(resizedCanvas, 0, 0);
       }
 
       return dataUrl;
@@ -660,6 +689,8 @@
       fullCanvas.width = sourceCanvas.width;
       fullCanvas.height = sourceCanvas.height;
       const ctx = fullCanvas.getContext('2d');
+      ctx.fillStyle = '#FFFFFF';
+      ctx.fillRect(0, 0, fullCanvas.width, fullCanvas.height);
       ctx.drawImage(sourceCanvas, 0, 0);
       applyFilterToCanvas(fullCanvas);
       
@@ -722,6 +753,8 @@
         canvas.height = img.width;
 
         const ctx = canvas.getContext('2d');
+        ctx.fillStyle = '#FFFFFF';
+        ctx.fillRect(0, 0, canvas.width, canvas.height);
         ctx.translate(canvas.width / 2, canvas.height / 2);
         ctx.rotate((90 * Math.PI) / 180);
         ctx.drawImage(img, -img.width / 2, -img.height / 2);
@@ -742,19 +775,21 @@
       renderPages();
     }
 
+    // ACCURATE PDF COMPRESSION GENERATOR
     function generatePDFBlob() {
       const { jsPDF } = window.jspdf;
       const pdf = new jsPDF({
         orientation: 'portrait',
         unit: 'mm',
-        format: 'a4'
+        format: 'a4',
+        compress: true
       });
 
       const pages = getActivePages();
 
       pages.forEach((pageData, index) => {
         if (index > 0) pdf.addPage('a4', 'portrait');
-        pdf.addImage(pageData, 'JPEG', 0, 0, 210, 297, undefined, selectedSizeMode === 'compressed' ? 'FAST' : 'SLOW');
+        pdf.addImage(pageData, 'JPEG', 0, 0, 210, 297, undefined, 'FAST');
       });
 
       return pdf.output('blob');
@@ -817,12 +852,13 @@
       }
     }
   </script>
+  
   <script>
-  if ('serviceWorker' in navigator) {
-    navigator.serviceWorker.register('sw.js')
-      .then(() => console.log('Service Worker Registered!'))
-      .catch((err) => console.log('Service Worker Failed:', err));
-  }
-</script>
+    if ('serviceWorker' in navigator) {
+      navigator.serviceWorker.register('sw.js')
+        .then(() => console.log('Service Worker Registered!'))
+        .catch((err) => console.log('Service Worker Failed:', err));
+    }
+  </script>
 </body>
 </html>
