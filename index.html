@@ -112,7 +112,6 @@
       background: #17a2b8;
     }
 
-    /* Size Mode Selector Options Bar */
     .size-mode-container {
       background: var(--surface);
       border: 1px solid #333;
@@ -154,7 +153,6 @@
       border-color: #fff;
     }
 
-    /* Capture Step */
     .capture-container {
       flex: 1;
       display: flex;
@@ -165,7 +163,6 @@
       text-align: center;
     }
 
-    /* Editor Container */
     .editor-container {
       flex: 1;
       max-height: 55vh;
@@ -216,7 +213,6 @@
       background-color: #000 !important;
     }
 
-    /* Grid Preview */
     .grid {
       display: grid;
       grid-template-columns: repeat(auto-fill, minmax(130px, 1fr));
@@ -301,7 +297,6 @@
       border: 1px solid #fff;
     }
 
-    /* --- INSTALL DESKTOP/MOBILE POPUP MODAL --- */
     .install-modal-overlay {
       display: none;
       position: fixed;
@@ -363,7 +358,6 @@
       flex: 1;
     }
 
-    /* Status Toast Alert */
     #status-toast {
       display: none;
       position: fixed;
@@ -436,10 +430,10 @@
       <span class="size-mode-title">Select Output File Size Target:</span>
       <div class="mode-toggle-group">
         <button id="mode-100kb" class="mode-btn active-mode" onclick="setSizeMode('compressed')">
-          ⚡ Under 100 KB Mode
+          ⚡ Clear Optimized Mode
         </button>
         <button id="mode-original" class="mode-btn" onclick="setSizeMode('original')">
-          💎 Original Size & Quality
+          💎 Original HD Quality
         </button>
       </div>
     </div>
@@ -478,7 +472,6 @@
 
   <script>
     const A4_ASPECT_RATIO = 210 / 297;
-    const TARGET_MAX_BYTES = 95 * 1024; // 95 KB Target to keep safely under 100KB
 
     let scannedPagesOriginal = [];
     let scannedPagesCompressed = [];
@@ -491,7 +484,6 @@
     const pagesGrid = document.getElementById('pages-grid');
     const installModal = document.getElementById('install-modal');
 
-    // Register PWA Install Event
     window.addEventListener('beforeinstallprompt', (e) => {
       e.preventDefault();
       deferredPrompt = e;
@@ -621,20 +613,19 @@
       return canvas;
     }
 
-    // Helper function to measure actual Byte size of Base64 DataURL
     function getByteSize(base64Str) {
       const base64WithoutHeader = base64Str.split(',')[1] || base64Str;
       return Math.round((base64WithoutHeader.length * 3) / 4);
     }
 
-    // ACCURATE COMPRESSION FUNCTION (< 100KB)
-    function compressToTargetSize(sourceCanvas, targetSizeBytes = TARGET_MAX_BYTES) {
-      let quality = 0.65;
+    // HIGH QUALITY COMPRESSION FUNCTION
+    function compressToTargetSize(sourceCanvas, targetSizeBytes = 250 * 1024) {
+      let quality = 0.82;
       let width = sourceCanvas.width;
       let height = sourceCanvas.height;
 
-      // Max resolution dimension limited to 800px for guaranteed 100KB size
-      let maxDim = 800; 
+      // Keep resolution high for sharp text reading
+      let maxDim = 1200; 
       if (width > maxDim || height > maxDim) {
         if (width > height) {
           height = Math.round((height * maxDim) / width);
@@ -650,7 +641,6 @@
       tempCanvas.height = height;
       const ctx = tempCanvas.getContext('2d');
       
-      // Draw solid white background
       ctx.fillStyle = '#FFFFFF';
       ctx.fillRect(0, 0, width, height);
       ctx.drawImage(sourceCanvas, 0, 0, width, height);
@@ -658,27 +648,9 @@
 
       let dataUrl = tempCanvas.toDataURL('image/jpeg', quality);
 
-      // Phase 1: Quality reduction loop
-      while (getByteSize(dataUrl) > targetSizeBytes && quality > 0.20) {
+      while (getByteSize(dataUrl) > targetSizeBytes && quality > 0.50) {
         quality -= 0.05;
         dataUrl = tempCanvas.toDataURL('image/jpeg', quality);
-      }
-
-      // Phase 2: Canvas Dimension Resizing loop if still larger than target
-      let scale = 0.85;
-      while (getByteSize(dataUrl) > targetSizeBytes && tempCanvas.width > 250) {
-        const resizedCanvas = document.createElement('canvas');
-        resizedCanvas.width = Math.round(tempCanvas.width * scale);
-        resizedCanvas.height = Math.round(tempCanvas.height * scale);
-        const rCtx = resizedCanvas.getContext('2d');
-        rCtx.fillStyle = '#FFFFFF';
-        rCtx.fillRect(0, 0, resizedCanvas.width, resizedCanvas.height);
-        rCtx.drawImage(tempCanvas, 0, 0, resizedCanvas.width, resizedCanvas.height);
-        
-        dataUrl = resizedCanvas.toDataURL('image/jpeg', 0.60);
-        tempCanvas.width = resizedCanvas.width;
-        tempCanvas.height = resizedCanvas.height;
-        tempCanvas.getContext('2d').drawImage(resizedCanvas, 0, 0);
       }
 
       return dataUrl;
@@ -735,7 +707,7 @@
         card.innerHTML = `
           <div class="page-card-image-wrap">
             <img src="${src}" />
-            <span class="page-badge">${selectedSizeMode === 'compressed' ? '<100KB' : 'Original'}</span>
+            <span class="page-badge">${selectedSizeMode === 'compressed' ? 'Optimized' : 'Original'}</span>
             <button class="delete-btn" onclick="deletePage(${idx})">×</button>
           </div>
           <button class="rotate-card-btn" onclick="rotatePreviewPage(${idx})">🔄 Rotate 90°</button>
@@ -775,7 +747,6 @@
       renderPages();
     }
 
-    // ACCURATE PDF COMPRESSION GENERATOR
     function generatePDFBlob() {
       const { jsPDF } = window.jspdf;
       const pdf = new jsPDF({
@@ -789,7 +760,7 @@
 
       pages.forEach((pageData, index) => {
         if (index > 0) pdf.addPage('a4', 'portrait');
-        pdf.addImage(pageData, 'JPEG', 0, 0, 210, 297, undefined, 'FAST');
+        pdf.addImage(pageData, 'JPEG', 0, 0, 210, 297, undefined, 'SLOW');
       });
 
       return pdf.output('blob');
