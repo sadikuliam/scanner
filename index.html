@@ -635,7 +635,6 @@
         let deferredPrompt = null;
         let isProcessing = false;
         let isCropperReady = false;
-        let pendingRect = null;
 
         // ─── DOM refs ──────────────────────────────────────────────
         const editorImg = document.getElementById('editor-image');
@@ -991,7 +990,6 @@
             ctx.fillRect(0, 0, tmp.width, tmp.height);
             ctx.drawImage(sourceCanvas, 0, 0);
             applyFilterToCanvas(tmp);
-            // Use quality 1.0 for maximum fidelity
             return tmp.toDataURL('image/jpeg', 1.0);
         }
 
@@ -1145,7 +1143,6 @@
             if (!scannedPagesOriginal.length) return null;
             const { jsPDF } = window.jspdf;
 
-            // Select appropriate image array based on mode
             let imageDataUrls;
             if (selectedSizeMode === 'compressed') {
                 imageDataUrls = scannedPagesCompressed;
@@ -1162,93 +1159,164 @@
                 return pdf.output('blob');
             }
 
-            const blob = buildPDF(imageDataUrls);
-            return blob;
+            return buildPDF(imageDataUrls);
         }
 
         // ─── Exports ───────────────────────────────────────────────
         async function exportPDF() {
-            if (!scannedPagesOriginal.length) return showToast('❌ No pages to export.', 2500);
+            if (!scannedPagesOriginal.length) {
+                showToast('❌ No pages to export.', 2500);
+                return;
+            }
             showToast('⏳ Generating PDF…', 3000);
             try {
                 const blob = await generatePDFBlob();
-                if (!blob) return showToast('❌ Failed to generate PDF.', 2500);
+                if (!blob) throw new Error('PDF generation failed');
                 const size = blob.size;
                 if (selectedSizeMode === 'compressed' && size > TARGET_BYTES) {
                     showToast(`⚠️ PDF is ${formatBytes(size)} — exceeds 99 KB. Try reducing pages.`, 4000);
                 } else {
                     showToast(`✅ PDF ready: ${formatBytes(size)}`, 2000);
                 }
+                // Download
                 const link = document.createElement('a');
                 link.href = URL.createObjectURL(blob);
                 link.download = `Scan_${selectedSizeMode}_${new Date().toISOString().slice(0,10)}.pdf`;
+                document.body.appendChild(link);
                 link.click();
+                document.body.removeChild(link);
+                setTimeout(() => URL.revokeObjectURL(link.href), 10000);
             } catch (e) {
-                showToast('❌ Error generating PDF.', 3000);
-                console.error(e);
+                console.error('PDF export error:', e);
+                showToast('❌ Failed to generate PDF: ' + e.message, 4000);
             }
         }
 
         function exportJPG() {
             const pages = getActivePages();
-            if (!pages.length) return showToast('❌ No pages to export.', 2500);
+            if (!pages.length) {
+                showToast('❌ No pages to export.', 2500);
+                return;
+            }
             pages.forEach((src, idx) => {
-                const a = document.createElement('a');
-                a.href = src;
+                const link = document.createElement('a');
+                link.href = src;
                 const label = selectedSizeMode === 'compressed' ? '99KB' : 'HD';
-                a.download = `Scan_${label}_Page${idx+1}.jpg`;
-                a.click();
+                link.download = `Scan_${label}_Page${idx+1}.jpg`;
+                document.body.appendChild(link);
+                link.click();
+                document.body.removeChild(link);
             });
             showToast(`✅ ${pages.length} JPGs exported.`, 2000);
         }
 
         async function sharePDF() {
-            if (!scannedPagesOriginal.length) return showToast('❌ No pages to share.', 2500);
-            showToast('⏳ Preparing PDF…', 3000);
+            if (!scannedPagesOriginal.length) {
+                showToast('❌ No pages to share.', 2500);
+                return;
+            }
+            showToast('⏳ Preparing PDF for sharing…', 3000);
             try {
                 const blob = await generatePDFBlob();
-                if (!blob) return showToast('❌ Failed to generate PDF.', 2500);
+                if (!blob) throw new Error('PDF generation failed');
                 const file = new File([blob], `Scan_${Date.now()}.pdf`, { type: 'application/pdf' });
+
                 if (navigator.canShare && navigator.canShare({ files: [file] })) {
-                    await navigator.share({ files: [file], title: 'Scanned Document' });
+                    await navigator.share({
+                        files: [file],
+                        title: 'Scanned Document'
+                    });
                     showToast('📤 PDF shared!', 2000);
                 } else {
+                    // Fallback: download
                     const link = document.createElement('a');
                     link.href = URL.createObjectURL(blob);
                     link.download = `Scan_${Date.now()}.pdf`;
+                    document.body.appendChild(link);
                     link.click();
+                    document.body.removeChild(link);
+                    setTimeout(() => URL.revokeObjectURL(link.href), 10000);
                     showToast('📥 PDF downloaded (share not supported).', 2500);
                 }
             } catch (e) {
-                if (e.name !== 'AbortError') { console.error(e);
-                    showToast('❌ Share failed.', 3000); }
+                if (e.name === 'AbortError') {
+                    // User cancelled
+                    showToast('Share cancelled.', 1500);
+                } else {
+                    console.error('Share PDF error:', e);
+                    showToast('❌ Failed to share PDF: ' + e.message, 4000);
+                    // Fallback: download
+                    try {
+                        const blob = await generatePDFBlob();
+                        if (blob) {
+                            const link = document.createElement('a');
+                            link.href = URL.createObjectURL(blob);
+                            link.download = `Scan_${Date.now()}.pdf`;
+                            document.body.appendChild(link);
+                            link.click();
+                            document.body.removeChild(link);
+                            showToast('📥 PDF downloaded as fallback.', 2500);
+                        }
+                    } catch (fallbackError) {
+                        console.error('Fallback download failed:', fallbackError);
+                    }
+                }
             }
         }
 
         async function shareJPG() {
             const pages = getActivePages();
-            if (!pages.length) return showToast('❌ No pages to share.', 2500);
+            if (!pages.length) {
+                showToast('❌ No pages to share.', 2500);
+                return;
+            }
             try {
                 const files = await Promise.all(pages.map(async (dataUrl, idx) => {
-                    const blob = await (await fetch(dataUrl)).blob();
+                    const response = await fetch(dataUrl);
+                    const blob = await response.blob();
                     const label = selectedSizeMode === 'compressed' ? '99KB' : 'HD';
                     return new File([blob], `Scan_${label}_Pg${idx+1}.jpg`, { type: 'image/jpeg' });
                 }));
+
                 if (navigator.canShare && navigator.canShare({ files })) {
-                    await navigator.share({ files, title: 'Scanned Pages' });
+                    await navigator.share({
+                        files: files,
+                        title: 'Scanned Pages'
+                    });
                     showToast('📤 JPGs shared!', 2000);
                 } else {
-                    files.forEach(f => {
+                    // Fallback: download each
+                    files.forEach((file) => {
                         const link = document.createElement('a');
-                        link.href = URL.createObjectURL(f);
-                        link.download = f.name;
+                        link.href = URL.createObjectURL(file);
+                        link.download = file.name;
+                        document.body.appendChild(link);
                         link.click();
+                        document.body.removeChild(link);
                     });
                     showToast('📥 JPGs downloaded (share not supported).', 2500);
                 }
             } catch (e) {
-                if (e.name !== 'AbortError') { console.error(e);
-                    showToast('❌ Share failed.', 3000); }
+                if (e.name === 'AbortError') {
+                    showToast('Share cancelled.', 1500);
+                } else {
+                    console.error('Share JPG error:', e);
+                    showToast('❌ Failed to share JPGs: ' + e.message, 4000);
+                    // Fallback: download individually
+                    try {
+                        pages.forEach((src, idx) => {
+                            const link = document.createElement('a');
+                            link.href = src;
+                            link.download = `Scan_Pg${idx+1}.jpg`;
+                            document.body.appendChild(link);
+                            link.click();
+                            document.body.removeChild(link);
+                        });
+                        showToast('📥 JPGs downloaded as fallback.', 2500);
+                    } catch (fallbackError) {
+                        console.error('Fallback download failed:', fallbackError);
+                    }
+                }
             }
         }
 
@@ -1271,7 +1339,7 @@
                 .then(() => console.log('SW registered'))
                 .catch(() => console.log('SW skip'));
         }
-        console.log('📄 SHM Scanner · HD vs 99KB modes now distinctly different.');
+        console.log('📄 SHM Scanner · Export & share functions are now robust.');
     </script>
 </body>
 </html>
